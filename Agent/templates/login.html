@@ -35,7 +35,7 @@
                 margin-top: 100px;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
             }
-            input[type="number"]{
+            input[type="email"]{
                 font-size: 16px;
                 border: 0;
                 border-bottom: 1px solid #ccc;
@@ -47,7 +47,7 @@
                 cursor: text;
             }
 
-            input[type="text"]{
+            input[type="password"]{
                 font-size: 16px;
                 border: 0;
                 border-bottom: 1px solid #ccc;
@@ -107,7 +107,7 @@
                 display: inline-block;
                 max-width: 100%;
                 min-width: 300px;
-                padding: 20px 10px;
+                padding: 10px 10px;
                 border-radius: 5px;
                 background-color: #141619;
                 color: #f6f5f9;
@@ -126,7 +126,7 @@
                 bottom: 5px;
                 width: 0;
                 height: 3px;
-                background-image: linear-gradient(to right,#529bdb,#3250bf);
+                background-image: linear-gradient(to right,#ffaa00,#bf9532);
                 border-radius: 4px;
                 animation: progress 3s .25s linear forwards;
             }
@@ -161,11 +161,12 @@
         </script>
     </head>
     <body>
+
         <div class="notification">
             <p>{{message}}</p>
             <span class="progress"></span>
         </div>
-
+        
         <div style="padding:20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);">
             <header style="color:#2E8DCD; font-size:20px"><b>HarvestHub</b></header>
             <label style="font-size: 12px;">(Agent Portal)</label>
@@ -173,40 +174,23 @@
 
         <div class="main">
             <div class="main_div">
-                <header class="header">Provide Bag Details</header> <br/><br/>
-                <form action="{{ url_for('insert_commodity_bag') }}" method="POST" id="agent_form">
+                <header class="header">Login</header> <br/><br/>
+                <form action="{{ url_for('login_form') }}" method="POST" id="agent_form">
 
                     <div>
-                        <label for="commodity">Commodity:</label><br>
-                        <input type="text" name="commodity" id="commodity" required>
+                        <label for="email">Email</label><br>
+                        <input type="email" name="email" id="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" required>
                     </div>
                     <br><br>
                     
                     <div>
-                        <label for="price">Price:</label><br>
-                        <input type="number" name="price" id="price" autocomplete="off" min="1" max="300" required>
+                        <label for="password">Password</label><br>
+                        <input type="password" name="password" id="password" minlength="10" required>
                     </div>
                     <br><br>
                     
-                    <div>
-                        <label for="weight">Weight:</label><br>
-                        <input type="number" name="weight" id="weight" autocomplete="off" min="1" max="100" required>
-                    </div>
-                    <br><br>
-                    
-                    <div>
-                        <label for="farmer_id">Farmer ID:</label><br>
-                        <input type="text" name="farmer_id" id="farmer_id" autocomplete="off" required>
-                    </div>
-                    <br><br>
-
-                    <div>
-                        <label for="agent_id">Agent ID:</label><br>
-                        <input type="text" name="agent_id" id="agent_id" autocomplete="off" required>
-                    </div>
-                    <br><br>
-                    
-                    <input class="btn" type="submit" value="Submit">
+                    <input class="btn" type="submit" value="Submit"><br/>
+                    <label style="font-size: 12px;">(For account contact the owner.)</label><br/>
                 </form>
             </div>
         </div>

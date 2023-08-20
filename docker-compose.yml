@@ -11,6 +11,19 @@ services:
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
     restart: always
+  agent_portal:
+    image: agent-portal:latest  # Update the repository name and tag
+    build:
+      context: ./agent  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 5001:5001
+    depends_on:
+      - postgres
+    restart: always
 
 volumes:
   postgres-db-volume:
+
+
+
