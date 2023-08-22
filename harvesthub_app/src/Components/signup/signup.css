@@ -1,0 +1,125 @@
+
+
+
+
+
+.signupmain{
+    display: flex;
+    padding:40px;
+    justify-content:center;
+    align-items:center;
+}
+
+.signupdiv{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding:40px;
+    justify-content:center;
+    align-items:center;
+    width: fit-content;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.box {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.signupdiv input{
+    font-size: 16px;
+    border: 0;
+    border-bottom: 1px solid #ccc;
+    width: 300px;
+    -webkit-appearance: none;
+    border-radius: 0;
+    padding-bottom: 5px;
+    cursor: text;
+}
+
+.signupdiv input:focus {
+    outline: 0;
+    border-bottom: 1px solid #2E8DCD;
+}
+
+.signupdiv label {
+    font-size: 15px;
+    color: #2E8DCD;
+    font-family: Arial, Helvetica, sans-serif;
+    margin-bottom: 5px;
+}
+
+
+.signUpheader{
+    font-size: 20px;
+    /* padding-left: 10px ; */
+    padding-bottom: 5px;
+    /* border-left: 2px solid #2E8DCD; */
+    color: #2E8DCD;
+    font-weight: bold;
+}
+
+.signupdiv .btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1.5;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    padding: 10px 20px;
+    letter-spacing: 0.05rem;
+    background-color: #2E8DCD;
+    color:white;
+    border-radius: 5px;
+    border: 2px solid #2E8DCD;
+}
+
+.signupdiv .btn:hover {
+    /* outline: 2px dotted #55d7dc;  */
+    border: 2px solid #2E8DCD;
+    background-color: transparent;
+    color:black
+}
+
+.another_button{
+    font-size: 15px;
+    font-family: Arial, Helvetica, sans-serif;
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1.5;
+    width: fit-content;
+    font-size: 15px;
+    padding: 10px 20px;
+    letter-spacing: 0.05rem;
+    background-color: #2E8DCD;
+    color:white;
+    border-radius: 5px;
+    border: 2px solid #2E8DCD;
+}
+
+.another_button:hover{
+    border: 2px solid #2E8DCD;
+    background-color: transparent;
+    color:black
+}
+
+
+.sidediv{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    padding:40px;
+    justify-content:center;
+    align-items:center;
+    border-right: 1px solid grey;
+}
+
+
+.switchText{
+    color:#2E8DCD ;
+    cursor:pointer
+}
+
+.switchText:hover{
+    color: #9c27b0;
+}
