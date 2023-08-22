@@ -31,6 +31,27 @@ services:
     depends_on:
       - postgres
     restart: always
+  retailer_service:
+    image: retailer-service:latest  # Update the repository name and tag
+    build:
+      context: ./retailer  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 5000:5000
+    depends_on:
+      - postgres
+    restart: always
+  harvest-hub:
+    image: harvesthub:latest  # Update the repository name and tag
+    build:
+      context: ./harvesthub_app  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 3000:3000
+    depends_on:
+      - retailer_service
+      - postgres
+    restart: always
 
 volumes:
   postgres-db-volume:

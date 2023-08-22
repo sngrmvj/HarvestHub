@@ -17,6 +17,8 @@ const Signup = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [address, setAddress] = useState("");
+    const [phonenumber, setPhonenumber] = useState("");
     const [selectedOption, setSelectedOption] = useState('');
 
     useEffect(() => {
@@ -122,31 +124,46 @@ const Signup = () => {
                                     onChange={(e) => setPassword(e.target.value)}
                                 /><br/><br/>
 
+                                <label htmlFor="address">Address:</label><br/>
+                                <textarea
+                                    id="address"
+                                    rows="5"
+                                    cols="50"
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value) />
+                                /><br/><br/>
 
-                                <div>
-                                    <label className="container" style={{fontSize:"18px"}}>Supplier
-                                        <input type="radio"
-                                            value="Supplier"
-                                            checked={selectedOption === 'Supplier'}
-                                            onChange={handleOptionChange}
-                                        />
-                                        <span className="checkmark"></span>
-                                    </label><br/>
-                                    <label className="container" style={{fontSize:"18px"}}>Consumer
-                                        <input type="radio"
-                                            value="Consumer"
-                                            checked={selectedOption === 'Consumer'}
-                                            onChange={handleOptionChange}
-                                        />
-                                        <span className="checkmark"></span>
-                                    </label>
-                                </div> <br/><br/>
+                                <label htmlFor="tel">Phone number:</label><br/>
+                                <input
+                                    type="tel"
+                                    id="tel"
+                                    pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}"
+                                    value={tel}
+                                    onChange={(e) => setPhonenumber(e.target.value)}
+                                /><br/><br/>
+
+//                                <div>
+//                                    <label className="container" style={{fontSize:"18px"}}>Supplier
+//                                        <input type="radio"
+//                                            value="Supplier"
+//                                            checked={selectedOption === 'Supplier'}
+//                                            onChange={handleOptionChange}
+//                                        />
+//                                        <span className="checkmark"></span>
+//                                    </label><br/>
+//                                    <label className="container" style={{fontSize:"18px"}}>Consumer
+//                                        <input type="radio"
+//                                            value="Consumer"
+//                                            checked={selectedOption === 'Consumer'}
+//                                            onChange={handleOptionChange}
+//                                        />
+//                                        <span className="checkmark"></span>
+//                                    </label>
+//                                </div> <br/><br/>
 
                                 <button type="submit" className='btn'>Register</button><br/><br/>
-
                             </form>
                         </div>
-
                     </div>
                 </div>
             </span>
