@@ -151,6 +151,9 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+venv/
+harvesthub_app/node_modules
+.idea/
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
