@@ -8,3 +8,5 @@ Vegetable Supply Chain Management
 3. Farmer
 4. Retailer
 5. HarvestHub Portal
+
+### Technology
