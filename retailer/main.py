@@ -27,12 +27,8 @@ def custom_response(res, status_code):
 @app.route('/retailer/login', methods=['PUT'])
 def login_form():
     authenticated = False  # Replace with your authentication logic
-    data = {
-        "email": request.form.get('email'),
-        "password": request.form.get('password'),
-    }
 
-    print(data)
+    data = request.get_json()
 
     # TODO - need to check the data with the database The message is getting appended in the URL We need to make sure that is correct
 
@@ -44,7 +40,35 @@ def login_form():
                             expires=datetime.datetime.now() + datetime.timedelta(minutes=90))
         return response
     else:
-        return custom_response({"error": "Not Authenticated"}, 504)
+        return custom_response({"error": "Not Authenticated"}, 404)
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# >>>> Submission of register Form
+# ---------------------------------------------------------------------------------------------------------------------
+@app.route('/retailer/register', methods=['POST'])
+def register():
+
+    data = request.get_json()
+
+    # TODO - need to check the data with the database The message is getting appended in the URL We need to make sure that is correct
+
+
+    return jsonify({"data": "Registered successfully"})
+
+    # if authenticated:
+    #     # Create a response object
+    #     response = make_response(jsonify({'message': 'Authentication successful'}))
+    #     # Set a cookie to indicate successful login with 90 minutes of expiry
+    #     response.set_cookie('retailer_login_status', 'success', secure=True,
+    #                         expires=datetime.datetime.now() + datetime.timedelta(minutes=90))
+    #     return response
+    # else:
+    #     return custom_response({"error": "Not Authenticated"}, 404)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -111,7 +135,7 @@ def get_receipt():
 @app.route('/retailer/cart', methods=['GET'])
 def get_cart():
 
-    # TODO - Code to add it in the database
+    # TODO - Code to add it in the redis
     
     return jsonify({'data':""})
 
@@ -123,6 +147,34 @@ def get_cart():
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/retailer/cart', methods=['PUT'])
 def add_to_cart():
+
+    # TODO - Code to add it in the redis
+    
+    return jsonify({'data':""})
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# >>>> Get all the receipts
+# ---------------------------------------------------------------------------------------------------------------------
+@app.route('/retailer/cart', methods=['DELETE'])
+def delete_from_cart():
+
+    # TODO - Code to add it in the redis
+    
+    return jsonify({'data':""})
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# >>>> Get all the receipts
+# ---------------------------------------------------------------------------------------------------------------------
+@app.route('/retailer/purchase', methods=['PUT'])
+def purchase():
 
     # TODO - Code to add it in the database
     
