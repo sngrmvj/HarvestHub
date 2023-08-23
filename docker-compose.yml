@@ -11,6 +11,16 @@ services:
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
     restart: always
+  redis:
+    image: bitnami/redis:latest
+    container_name: nect-redis
+    ports:
+      - 6379:6379
+    environment:
+      REDIS_PASSWORD: default
+    volumes:
+      - redisvol:/bitnami/redis/data
+    restart: always
   agent_portal:
     image: agent-portal:latest  # Update the repository name and tag
     build:
@@ -55,6 +65,7 @@ services:
 
 volumes:
   postgres-db-volume:
+  redisvol:
 
 
 

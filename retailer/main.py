@@ -60,16 +60,6 @@ def register():
 
     return jsonify({"data": "Registered successfully"})
 
-    # if authenticated:
-    #     # Create a response object
-    #     response = make_response(jsonify({'message': 'Authentication successful'}))
-    #     # Set a cookie to indicate successful login with 90 minutes of expiry
-    #     response.set_cookie('retailer_login_status', 'success', secure=True,
-    #                         expires=datetime.datetime.now() + datetime.timedelta(minutes=90))
-    #     return response
-    # else:
-    #     return custom_response({"error": "Not Authenticated"}, 404)
-
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -187,13 +177,3 @@ def purchase():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host='0.0.0.0')
-
-
-
-""" 
-1. Receipts and receipt page
-2. Sign up
-3. Login 
-4. Cart
-5. Display all the vegetables
-"""
