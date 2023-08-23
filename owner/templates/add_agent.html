@@ -1,0 +1,113 @@
+<html>
+    <head>
+        <title>Owner Portal</title>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <style>
+            body{
+                margin: 0;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            /* Chrome, Safari, Edge, Opera */
+            input::-webkit-outer-spin-button,
+            input::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+
+            /* Firefox */
+            input[type=number] {
+                -moz-appearance: textfield;
+            }
+            input[type="text"]{
+                font-size: 16px;
+                border: 0;
+                border-bottom: 1px solid #ccc;
+                width: 320px;
+                -webkit-appearance: none;
+                border-radius: 0;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                cursor: text;
+            }
+            input[type="email"]{
+                font-size: 16px;
+                border: 0;
+                border-bottom: 1px solid #ccc;
+                width: 320px;
+                -webkit-appearance: none;
+                border-radius: 0;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                cursor: text;
+            }
+            input[type="password"]{
+                font-size: 16px;
+                border: 0;
+                border-bottom: 1px solid #ccc;
+                width: 320px;
+                -webkit-appearance: none;
+                border-radius: 0;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                cursor: text;
+            }
+
+            input:focus {
+                outline: 0;
+                border-bottom: 1px solid #2E8DCD;
+            }
+
+            label {
+                font-size: 15px;
+                color: #2E8DCD;
+                font-family: Arial, Helvetica, sans-serif;
+                margin-bottom: 5px;
+                padding-top: 3px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="notification">
+            <p>{{message}}</p>
+            <span class="progress"></span>
+        </div>
+
+        <div style="padding:20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);">
+            <header class="header"><b>HarvestHub</b></header>
+            <label style="font-size: 12px;">(Owner Portal)</label>
+        </div><br/>
+
+        <div class="main">
+            <div class="main_div">
+                <header class="header">Provide Agent Details</header> <br/><br/>
+                <form action="{{ url_for('add_agent') }}" method="POST" id="agent_form">
+
+                    <div>
+                        <label for="name">Name:</label><br>
+                        <input type="text" name="name" id="name" required>
+                    </div>
+                    <br><br>
+                    
+                    <div>
+                        <label for="email">Email:</label><br>
+                        <input type="email" name="email" id="email" autocomplete="off" required>
+                    </div>
+                    <br><br>
+                    
+                    <div>
+                        <label for="Password">Password:</label><br>
+                        <input type="password" name="Password" id="Password" autocomplete="off" min="10" required>
+                    </div>
+                    <br><br>
+                
+                    <input class="btn" type="submit" value="Submit">
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

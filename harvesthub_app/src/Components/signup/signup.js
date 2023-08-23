@@ -130,8 +130,8 @@ const Signup = () => {
                                     rows="5"
                                     cols="50"
                                     value={address}
-                                    onChange={(e) => setAddress(e.target.value) />
-                                /><br/><br/>
+                                    onChange={(e) => setAddress(e.target.value)} />
+                                <br/><br/>
 
                                 <label htmlFor="tel">Phone number:</label><br/>
                                 <input
@@ -141,25 +141,6 @@ const Signup = () => {
                                     value={tel}
                                     onChange={(e) => setPhonenumber(e.target.value)}
                                 /><br/><br/>
-
-//                                <div>
-//                                    <label className="container" style={{fontSize:"18px"}}>Supplier
-//                                        <input type="radio"
-//                                            value="Supplier"
-//                                            checked={selectedOption === 'Supplier'}
-//                                            onChange={handleOptionChange}
-//                                        />
-//                                        <span className="checkmark"></span>
-//                                    </label><br/>
-//                                    <label className="container" style={{fontSize:"18px"}}>Consumer
-//                                        <input type="radio"
-//                                            value="Consumer"
-//                                            checked={selectedOption === 'Consumer'}
-//                                            onChange={handleOptionChange}
-//                                        />
-//                                        <span className="checkmark"></span>
-//                                    </label>
-//                                </div> <br/><br/>
 
                                 <button type="submit" className='btn'>Register</button><br/><br/>
                             </form>

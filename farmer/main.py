@@ -43,7 +43,7 @@ def farmer_page():
     arg_message = request.args.get('message')  # Passed during redirect
     if not arg_message:
         arg_message = "Welcome"
-    if not login_status:
+    if login_status == 'success':
         # Here in this case if the cookie is not there we need to make sure that farmer logs in
         return render_template('login.html', message=arg_message)
     else:
