@@ -21,6 +21,17 @@ services:
     volumes:
       - redisvol:/bitnami/redis/data
     restart: always
+  owner_portal:
+    image: owner-portal:latest  # Update the repository name and tag
+    build:
+      context: ./owner  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 5003:5003
+    depends_on:
+      - postgres
+      - redis
+    restart: always
   agent_portal:
     image: agent-portal:latest  # Update the repository name and tag
     build:
@@ -30,6 +41,7 @@ services:
       - 5001:5001
     depends_on:
       - postgres
+      - owner_portal
     restart: always
   farmer_portal:
     image: farmer-portal:latest  # Update the repository name and tag
@@ -40,6 +52,7 @@ services:
       - 5002:5002
     depends_on:
       - postgres
+      - owner_portal
     restart: always
   retailer_service:
     image: retailer-service:latest  # Update the repository name and tag
@@ -50,6 +63,7 @@ services:
       - 5000:5000
     depends_on:
       - postgres
+      - redis
     restart: always
   harvest-hub:
     image: harvesthub:latest  # Update the repository name and tag
@@ -61,6 +75,7 @@ services:
     depends_on:
       - retailer_service
       - postgres
+      - owner_portal
     restart: always
 
 volumes:
