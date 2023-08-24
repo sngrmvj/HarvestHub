@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Farmer Portal</title>
+        <title>Owner Portal</title>
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta
@@ -175,6 +175,19 @@
             <label style="font-size: 12px;">(Farmer Portal)</label>
         </div><br/>
 
+        <div style="padding: 1opx;margin-left: 100px;">
+            <button class="btn" id="add_agent">Add Agent</button> 
+            <button class="btn" id="add_farmer">Add Farmer</button>
+            <script>
+                document.getElementById("add_agent").addEventListener("click", function() {
+                    window.location.href = "{{ url_for('agent_page') }}";
+                });
+                document.getElementById("add_farmer").addEventListener("click", function() {
+                    window.location.href = "{{ url_for('farmer_page') }}";
+                });
+            </script>
+        </div>
+
         <div class="main">
             <div class="main_div">
                 <div id="myGrid" class="ag-theme-alpine" style="height: 500px"></div>
@@ -201,7 +214,7 @@
                     new agGrid.Grid(eGridDiv, gridOptions);
 
                     // Fetch data from server
-                    fetch("{{ url_for('get_receipts') }}")
+                    fetch("{{ url_for('add_commodities') }}")
                     .then(response => response.json())
                     .then(data => {
                       // load fetched data into grid

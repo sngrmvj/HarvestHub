@@ -45,6 +45,23 @@
                 padding-bottom: 5px;
                 cursor: text;
             }
+            .main{
+                display: flex;
+                padding:40px; 
+                justify-content:center;
+                align-items:center;
+            }
+            .main_div{
+                display: flex;
+                flex-direction: column;
+                flex-wrap: wrap;
+                padding:40px; 
+                justify-content:center;
+                align-items:center;
+                width: fit-content;
+                margin-top: 100px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            }
             input[type="password"]{
                 font-size: 16px;
                 border: 0;
@@ -61,13 +78,92 @@
                 outline: 0;
                 border-bottom: 1px solid #2E8DCD;
             }
+            .header{
+                font-size: 20px;
+                /* padding-left: 10px ; */
+                padding-bottom: 5px;
+                font-family: Arial, Helvetica, sans-serif;
+                color: #2E8DCD;
+                font-weight: bold;
+            }
 
+            .btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                line-height: 1.5;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 15px;
+                padding: 10px 20px;
+                letter-spacing: 0.05rem;
+                background-color: #2E8DCD;
+                color:white;
+                border-radius: 5px;
+                border: 2px solid #2E8DCD;
+            }
             label {
                 font-size: 15px;
                 color: #2E8DCD;
                 font-family: Arial, Helvetica, sans-serif;
                 margin-bottom: 5px;
                 padding-top: 3px;
+            }
+            .maindiv .btn:hover { 
+                /* outline: 2px dotted #55d7dc;  */
+                border: 2px solid #2E8DCD;
+                background-color: transparent;
+                color:black
+            }
+            .notification{
+                position: absolute;
+                display: inline-block;
+                max-width: 100%;
+                min-width: 300px;
+                padding: 20px 10px;
+                border-radius: 5px;
+                background-color: #141619;
+                color: #f6f5f9;
+                box-shadow: 0 1px 10px rgba(0,0,0,.1);
+                transform: translateY(30px);
+                opacity: 0;
+                visibility: hidden;
+                animation: fade 4s linear forwards;
+                margin-top: 10px;
+                margin-left: 78%;
+                z-index: 1000;
+            }
+            .progress{
+                position: absolute;
+                left: 5px;
+                bottom: 5px;
+                width: 0;
+                height: 3px;
+                background-image: linear-gradient(to right,#529bdb,#3250bf);
+                border-radius: 4px;
+                animation: progress 3s .25s linear forwards;
+            }
+            @keyframes fade{
+                5%{
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateY(0px);
+                }
+                90% {
+                    opacity: 1;
+                    transform: translateY(0px);
+                }
+                95% {
+                    opacity: 0;
+                }
+                100%{
+                    opacity: 0;
+                    transform: translateY(-30px);
+                }
+            }
+            @keyframes progress {
+                to {
+                    width: calc(100% - 10px);
+                }
             }
         </style>
     </head>
@@ -80,6 +176,15 @@
         <div style="padding:20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);">
             <header class="header"><b>HarvestHub</b></header>
             <label style="font-size: 12px;">(Owner Portal)</label>
+        </div><br/>
+
+        <div style="padding: 1opx;margin-left: 50px;">
+            <button class="btn" id="back_button">Back</button> 
+            <script>
+                document.getElementById("back_button").addEventListener("click", function() {
+                    window.location.href = "{{ url_for('owner_page') }}";
+                });
+            </script>
         </div><br/>
 
         <div class="main">

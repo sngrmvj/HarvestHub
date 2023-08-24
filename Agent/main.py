@@ -39,10 +39,11 @@ def root():
 @app.route("/agent/")
 def agent_page():
     login_status = request.cookies.get('login_status')
+    print(login_status)
     arg_message = request.args.get('message')  # Passed during redirect
     if not arg_message:
         arg_message = "Welcome"
-    if login_status == 'success':
+    if login_status != 'success':
         # Here in this case if the cookie is not there we need to make sure that agent logs in
         return render_template('login.html', message=arg_message)
     else:

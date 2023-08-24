@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import random, string
-
-app = Flask(__name__)
+from setup import app, db
 
 
 
@@ -135,6 +134,8 @@ def get_monthly_statistics():
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, port=5003, host='0.0.0.0')
 
 

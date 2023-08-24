@@ -1,7 +1,7 @@
-from flask import Flask, Response, render_template, request, redirect, url_for, make_response, jsonify
-import json, uuid, datetime
+from flask import Response, request, make_response, jsonify
+import json, traceback, datetime
 
-app = Flask(__name__)
+from setup import app, db
 
 """ >>>> Function Calls """
 
@@ -176,4 +176,6 @@ def purchase():
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, port=5000, host='0.0.0.0')
