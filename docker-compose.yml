@@ -61,6 +61,10 @@ services:
   #     dockerfile: Dockerfile           # Path to your Dockerfile
   #   ports:
   #     - 5000:5000
+  #   environment:
+  #     SECRET_KEY: x
+  #     REDIS_PASSWORD: default
+  #     POSTGRES_PASSWORD: root
   #   depends_on:
   #     - postgres
   #     - redis

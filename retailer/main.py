@@ -1,5 +1,5 @@
 from flask import request, make_response, jsonify
-import traceback, datetime, redis, uuid
+import traceback, datetime, redis, uuid, jwt, os
 from models import Purchases, Retailer
 from setup import app, db
 
@@ -8,7 +8,8 @@ from setup import app, db
 
 # >>>> Attributes
 GET_ALL_COMMODITIES = "SELECT distinct(commodities) FROM warehouse"
-
+# Secret key for JWT token
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 
 """ >>>> APIs """
@@ -22,7 +23,7 @@ def login_form():
 
     data = request.get_json()
     try:
-        retailer_results = Retailer.query.filter_by(supplier_email=data['email']).all()
+        retailer_results = Retailer.query.filter_by(email=data['email']).all()
     except Exception as error:
         print(f"Error in fetching the login details - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in fetching the login details - {error}"}), 500
@@ -31,10 +32,12 @@ def login_form():
             authenticated = retailer_results.check_password(data['password'])
 
     if authenticated:
+        payload = {'email': data['email'], 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=90)}
+        token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
         # Create a response object
         response = make_response(jsonify({'message': 'Authentication successful'}))
         # Set a cookie to indicate successful login with 90 minutes of expiry
-        response.set_cookie('retailer_login_status', 'success', secure=True, expires=datetime.datetime.now() + datetime.timedelta(minutes=90))
+        response.set_cookie('retailer_token', token, secure=True, expires=datetime.datetime.now() + datetime.timedelta(minutes=90), httponly=True)
         return response
     else:
         return jsonify({"error": "Not Authenticated"}), 404
@@ -71,6 +74,7 @@ def register():
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/retailer/commodties', methods=['GET'])
 def get_all_commodities():
+
     try:
         # Run native SQL query
         result = db.session.execute(GET_ALL_COMMODITIES)
@@ -98,9 +102,22 @@ def get_all_commodities():
 @app.route('/retailer/receipts', methods=['GET'])
 def get_all_receipts():
 
-    arguments =  request.args.get('email')
+    jwt_token = request.cookies.get('retailer_token')
+    if jwt_token:
+        try:
+            decoded_payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return 'Token expired'
+        except jwt.InvalidTokenError:
+            return 'Invalid token'
+    else:
+        return jsonify({'error': 'Not Authorised'}), 401
+
+
+
+
     try:
-        retailer_results = Retailer.query.filter_by(email=arguments).all()
+        retailer_results = Retailer.query.filter_by(email=decoded_payload['email']).all()
 
         retailer_email = None
         for retailer in retailer_results:
@@ -110,8 +127,7 @@ def get_all_receipts():
 
         purchases = []
         for item in purchase_list:
-            # Todo - This should exclude the commodities.
-            purchases.append(item)
+            purchases.append([item.purchase_id, item.owner, item.retailer_email, item.retailer_address, item.created_date])
     except Exception as error:
         print(f"Error in retrieveing the all receipts - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in retrieveing the all receipts - {error}"}), 500
@@ -126,20 +142,33 @@ def get_all_receipts():
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/retailer/receipt', methods=['GET'])
 def get_receipt():
-
-    arguments =  request.args.get('id')
+    
+    jwt_token = request.cookies.get('retailer_token')
+    if jwt_token:
+        try:
+            decoded_payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return 'Token expired'
+        except jwt.InvalidTokenError:
+            return 'Invalid token'
+    else:
+        return jsonify({'error': 'Not Authorised'}), 401
 
     try:
-        purchese_order = Purchases.query.filter_by(purchase_id=arguments).all()
-        purchase = []
-        for item in purchese_order:
-            # Todo - This should include the commodities of a particular order
-            purchase.append(item)
+        arguments =  request.args.get('id')
+        purchase_order = Purchases.query.filter_by(purchase_id=arguments).all()
+        a_purchase = {}
+        for purchase in purchase_order:
+            a_purchase['purchase_id'] = purchase.purchase_id
+            a_purchase['email'] = purchase.retailer_email
+            a_purchase['address'] = purchase.retailer_address
+            a_purchase['date'] = purchase.created_date
+            a_purchase['commodities'] = purchase.commodity # This should be iterated in the frontend
     except Exception as error:
         print(f"Error in retrieveing the particular receipt - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in retrieveing the particular receipt - {error}"}), 500
     else:
-        return jsonify({'data': purchase}), 200
+        return jsonify({'data': a_purchase}), 200
     
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -152,9 +181,20 @@ def get_receipt():
 @app.route('/retailer/cart', methods=['GET'])
 def get_cart():
 
+    jwt_token = request.cookies.get('retailer_token')
+    if jwt_token:
+        try:
+            decoded_payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return 'Token expired'
+        except jwt.InvalidTokenError:
+            return 'Invalid token'
+    else:
+        return jsonify({'error': 'Not Authorised'}), 401
+
     try:
-        with redis.Redis(host='localhost', port=6379, db=0, password=None) as redis_connection:
-            retrieved_data = redis_connection.hgetall('<retailer_email>')
+        with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            retrieved_data = redis_connection.hgetall(decoded_payload['email'])
             # Convert the retrieved bytes to a Python dictionary
             retrieved_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in retrieved_data.items()}
             if retrieved_dict:
@@ -173,12 +213,23 @@ def get_cart():
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/retailer/cart', methods=['PUT'])
 def add_to_cart():
-    data = request.get_json()
+
+    jwt_token = request.cookies.get('retailer_token')
+    if jwt_token:
+        try:
+            decoded_payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return 'Token expired'
+        except jwt.InvalidTokenError:
+            return 'Invalid token'
+    else:
+        return jsonify({'error': 'Not Authorised'}), 401
 
     try:
-        with redis.Redis(host='localhost', port=6379, db=0, password=None) as redis_connection:
-            redis_connection.hmset('<retailer_email>', data)
-            retrieved_data = redis_connection.hgetall('<retailer_email>')
+        data = request.get_json()
+        with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            redis_connection.hmset(decoded_payload['email'], data)
+            retrieved_data = redis_connection.hgetall(decoded_payload['email'])
             if retrieved_data:
                 return jsonify({"message":"Added to the cart"}), 200
             else:
@@ -196,14 +247,27 @@ def add_to_cart():
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/retailer/cart', methods=['DELETE'])
 def delete_from_cart():
-    commodity = request.args.get('commodity')
+
+    jwt_token = request.cookies.get('retailer_token')
+    if jwt_token:
+        try:
+            decoded_payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return 'Token expired'
+        except jwt.InvalidTokenError:
+            return 'Invalid token'
+    else:
+        return jsonify({'error': 'Not Authorised'}), 401
+
+
     try:
-        with redis.Redis(host='localhost', port=6379, db=0, password=None) as redis_connection:
-            retrieved_data = redis_connection.hgetall('<retailer_email>') # retrieveing the data for the retailer email
+        commodity = request.args.get('commodity')
+        with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            retrieved_data = redis_connection.hgetall(decoded_payload['email']) # retrieveing the data for the retailer email
             if retrieved_data:
                 retrieved_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in retrieved_data.items()} # Converting the binary ascii
                 del retrieved_dict[commodity] # Deleting
-                redis_connection.hmset('<retailer_email>', retrieved_dict) # Re-inserting into the redis
+                redis_connection.hmset(decoded_payload['email'], retrieved_dict) # Re-inserting into the redis
                 return jsonify({"message":"Added to the cart"}), 200
             else:
                 return jsonify({'message': "Cart data not available"}), 404
@@ -222,11 +286,23 @@ def delete_from_cart():
 @app.route('/retailer/purchase', methods=['PUT'])
 def purchase():
 
+    jwt_token = request.cookies.get('retailer_token')
+    if jwt_token:
+        try:
+            decoded_payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return 'Token expired'
+        except jwt.InvalidTokenError:
+            return 'Invalid token'
+    else:
+        return jsonify({'error': 'Not Authorised'}), 401
+
+
     data = request.get_json()
     purchase_id = str(uuid.uuid4())
 
     try:
-        retailer_results = Retailer.query.filter_by(email=data['email']).all()
+        retailer_results = Retailer.query.filter_by(email=decoded_payload['email']).all()
 
         # We need to loop as the retailer_results is an object
         for retailer in retailer_results:
@@ -263,8 +339,3 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True, port=5000, host='0.0.0.0')
-
-
-
-
-
