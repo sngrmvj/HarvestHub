@@ -7,7 +7,6 @@ from setup import app, db
 
 
 # >>>> Attributes
-GET_ALL_COMMODITIES = "SELECT distinct(commodities) FROM warehouse"
 # Secret key for JWT token
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -77,7 +76,7 @@ def get_all_commodities():
 
     try:
         # Run native SQL query
-        result = db.session.execute(GET_ALL_COMMODITIES)
+        result = db.session.execute("SELECT distinct(commodities) FROM warehouse")
 
         if not result:
             return jsonify({'error': "Data not retrieved"}), 500
@@ -300,6 +299,7 @@ def purchase():
 
     data = request.get_json()
     purchase_id = str(uuid.uuid4())
+    is_successful = True
 
     try:
         retailer_results = Retailer.query.filter_by(email=decoded_payload['email']).all()
@@ -310,25 +310,96 @@ def purchase():
             db.session.add(purchase)
             db.session.commit()
     except Exception as error:
+        is_successful = False
         print(f"Error in adding the purchase details - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in adding the purchase details - {error}"}), 500
 
     try:
-        pass
-        # Todo - Retrive the details based on the bag_id, farmer_id, agent_id, commodity based on the data['commodities]
+
+        update_weight_query = """
+            UPDATE warehouse
+            SET weight = :new_weight
+            WHERE bag_id = :bag_id AND commodity = :commodity
+        """
+        delete_entry_query = "DELETE FROM warehouse WHERE bag_id = :bag_id"
+
+        print(">>>> Updating the warehouse table")
+        for commodity in data['commodities']:
+            select_weight_query = "SELECT weight, bag_id FROM warehouse WHERE commodity= :commodity"
+            commodity_weight_obj = db.session.execute(select_weight_query,{
+                'commodity': commodity[0]
+            })
+            
+            print("/tObtained the weights and bag_ids based on the commodity")
+            deleted_bags, supposed_bag_id, new_weight = [], None, None
+            for row in commodity_weight_obj:
+                if commodity[3] >= row[0]:
+                    deleted_bags.append(row[1])
+                else:
+                    new_weight = row[0] - commodity[3]
+                    supposed_bag_id = row[1]
+                    break
+            
+            if supposed_bag_id != None and new_weight != None:
+                print("/tObtained the supposed_bag_id and new_weight. This should be updated in the database")
+                with app.app_context():
+                    db.session.execute(
+                        update_weight_query,
+                        {
+                            'new_weight': new_weight,  # New weight value
+                            'bag_id': supposed_bag_id,   # Bag ID to identify the row to update
+                            'commodity': commodity[0]
+                        }
+                    )
+                    db.session.commit()
+
+            if len(deleted_bags) > 0:
+                print("/t There are deleted bag ids. We need to delete those. Since purchase happened.")
+                for delete_bag in deleted_bags:
+                    with app.app_context():
+                        db.session.execute(
+                            delete_entry_query,
+                            {  
+                                'bag_id': delete_bag   # Bag ID to identify the row to update
+                            }
+                        )
+                        db.session.commit()
     except Exception as error:
+        is_successful = False
         print(f"Error in updating the warehouse details about the purchase - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in adding the warehouse details about the purchase - {error}"}), 500
+    else:
+        print(">>>> Successfully updated the warehouse table after the warehouse insertion")
 
     try:
-        pass
-        # Todo - Retrive the details based on the bag_id, farmer_id, agent_id, commodity based on the data['commodities]
+        insert_query = """
+            INSERT INTO sell_statistics (farmer_id, bag_id, commodity, price_kg, selling_price)
+            VALUES (:farmer_id, :bag_id, :commodity, :price_kg, :selling_price)
+        """
+
+        for commodity in data['commodities']:
+            with app.app_context():
+                db.session.execute(insert_query,
+                    {
+                        'farmer_id': data['farmer_id'],
+                        'bag_id': data['bag_id'],
+                        'commodity': commodity[0],
+                        'price_kg': commodity[1],
+                        'selling_price': commodity[2]
+                    }
+                )
+        db.session.commit()
     except Exception as error:
+        is_successful = False
         print(f"Error in adding the statistics details about the purchase - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in adding the statistics details about the purchase - {error}"}), 500
+    else:
+        print(">>>> Successfully updated the statistics table after the warehouse insertion")
 
-    
-    return jsonify({'data':""})
+    if is_successful:
+        return jsonify({'message':'Purchase successful'}), 200
+    else:
+        return jsonify({'message':'Error in purchasing, please contact the administrator'}), 500
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -339,3 +410,17 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True, port=5000, host='0.0.0.0')
+
+
+
+
+
+with app.app_context():
+    db.session.execute(
+        update_query,
+        {
+            'new_weight': 100,  # New weight value
+            'bag_id': 'B456'    # Bag ID to identify the row to update
+        }
+    )
+    db.session.commit()
