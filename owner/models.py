@@ -40,6 +40,7 @@ class Agent_Farmer(db.Model):
     owner = db.Column(db.String(80), default="HarvestHub_Owner")
     commodity = db.Column(db.String(80), nullable=False)
     money_given = db.Column(db.Integer, nullable=False)
+    weight = db.Column(db.Float, nullable=False)
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):

@@ -8,21 +8,6 @@ cors = CORS(app, supports_credentials=True)
 db = SQLAlchemy(app)
 
 
-""" >>>> Function Calls """
-
-
-# ------------------------------------------------- Custom Response Function ------------------------------------------
-
-def custom_response(res, status_code):
-    return Response(
-        mimetype="application/json",
-        response=json.dumps(res),
-        status=status_code
-    )
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-
 
 """ >>>> APIs """
 
@@ -75,11 +60,10 @@ def login_form():
         print(f"Error in fetching the login details - {error} \n\n{traceback.format_exc()}")
         return redirect(url_for('farmer_page', message= f'Error in fetching the login details - {error}'))
     else:
-        if result:
-            for row in result:
-                if row[0] == data['password']:
-                    authenticated = True
-                    break 
+        row = result.fetchone()
+        if row:
+            if row[0] == data['password']:
+                authenticated = True
         else:
             return redirect(url_for('farmer_page', message='User not available'))
 
@@ -105,11 +89,10 @@ def get_receipts():
     all_receipts = []
 
     try:
-        receipts_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, created_date FROM agent_farmer"
+        receipts_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, weight, created_date FROM agent_farmer"
         result = db.session.execute(receipts_query)
-
         for row in result:
-            all_receipts.append([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]])
+            all_receipts.append([row.agent_id, row.farmer_id, row.truck_id, row.bag_id, row.owner, row.commodity, row.money_given, row.weight, row.created_date])
     except Exception as error:
         print(f"Error in fetching the all receipt details - {error} \n\n{traceback.format_exc()}")
     
@@ -133,24 +116,27 @@ def display_receipt():
 
     username, receipt_data = None, {}
 
+    # Todo - You can fetch it from the ag-grid column itself.
+
     try:
-        username_query = "SELECT username FROM farmer WHERE farmer_id= :farmer_id"
-        result = db.session.execute(username_query, {"farmer_id": data['email']})
-        for row in result:
-            username = row[0]
+        pass
+        # username_query = "SELECT username FROM farmer WHERE farmer_id= :farmer_id"
+        # result = db.session.execute(username_query, {"farmer_id": data['email']})
+        # for row in result:
+        #     username = row[0]
 
-        receipt_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, created_date FROM agent_farmer WHERE bag_id= :bag_id"
-        result = db.session.execute(receipt_query, {"bag_id": data['bag_id']})
+        # receipt_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, created_date FROM agent_farmer WHERE bag_id= :bag_id"
+        # result = db.session.execute(receipt_query, {"bag_id": data['bag_id']})
 
-        for row in result:
-            receipt_data['farmer'] = username
-            receipt_data['agent_id'] = row[0]
-            receipt_data['truck_id'] = row[2]
-            receipt_data['bag_id'] = row[3]
-            receipt_data['owner'] = row[4]
-            receipt_data['commodity'] = row[5]
-            receipt_data['money_given'] = row[6]
-            receipt_data['created_date'] = row[7]
+        # for row in result:
+        #     receipt_data['farmer'] = username
+        #     receipt_data['agent_id'] = row[0]
+        #     receipt_data['truck_id'] = row[2]
+        #     receipt_data['bag_id'] = row[3]
+        #     receipt_data['owner'] = row[4]
+        #     receipt_data['commodity'] = row[5]
+        #     receipt_data['money_given'] = row[6]
+        #     receipt_data['created_date'] = row[7]
     except Exception as error:
         print(f"Error in fetching the receipt details - {error} \n\n{traceback.format_exc()}")
     else:
