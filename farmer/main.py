@@ -1,7 +1,11 @@
-from flask import Flask, Response, render_template, request, redirect, url_for, make_response
-import json, uuid, datetime
+from flask import Flask, Response, render_template, request, redirect, url_for, make_response, jsonify
+import json, uuid, datetime, traceback
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 app = Flask(__name__)
+cors = CORS(app, supports_credentials=True)
+db = SQLAlchemy(app)
 
 
 """ >>>> Function Calls """
@@ -64,9 +68,20 @@ def login_form():
         "password": request.form.get('password'),
     }
 
-    print(data)
-
-    # TODO - need to check the data with the database The message is getting appended in the URL We need to make sure that is correct
+    try:
+        login_query = "SELECT password FROM farmer WHERE email= :email"
+        result = db.session.execute(login_query, {"email": data['email']})
+    except Exception as error:
+        print(f"Error in fetching the login details - {error} \n\n{traceback.format_exc()}")
+        return redirect(url_for('farmer_page', message= f'Error in fetching the login details - {error}'))
+    else:
+        if result:
+            for row in result:
+                if row[0] == data['password']:
+                    authenticated = True
+                    break 
+        else:
+            return redirect(url_for('farmer_page', message='User not available'))
 
     if authenticated:
         # Create a response object
@@ -86,11 +101,20 @@ def login_form():
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/farmer/allReceipts', methods=['GET'])
 def get_receipts():
-    data = {}
 
-    # TODO - The data successfully fetched and stored it in the global variable. Here the farmer has to use his ID
+    all_receipts = []
 
-    return redirect(url_for('display_receipt', data=data))
+    try:
+        receipts_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, created_date FROM agent_farmer"
+        result = db.session.execute(receipts_query)
+
+        for row in result:
+            all_receipts.append([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]])
+    except Exception as error:
+        print(f"Error in fetching the all receipt details - {error} \n\n{traceback.format_exc()}")
+    
+    return jsonify({'data': all_receipts})
+
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -101,9 +125,37 @@ def get_receipts():
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/farmer/receipt', methods=['PUT'])
 def display_receipt():
-    data = request.form.get('data')
-    # TODO = Please check this
-    return render_template('receipt.html', message=data)
+
+    data = {
+        "bag_id": request.form.get('bag_id'),
+        "farmer_id": request.form.get('farmer_id'),
+    }
+
+    username, receipt_data = None, {}
+
+    try:
+        username_query = "SELECT username FROM farmer WHERE farmer_id= :farmer_id"
+        result = db.session.execute(username_query, {"farmer_id": data['email']})
+        for row in result:
+            username = row[0]
+
+        receipt_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, created_date FROM agent_farmer WHERE bag_id= :bag_id"
+        result = db.session.execute(receipt_query, {"bag_id": data['bag_id']})
+
+        for row in result:
+            receipt_data['farmer'] = username
+            receipt_data['agent_id'] = row[0]
+            receipt_data['truck_id'] = row[2]
+            receipt_data['bag_id'] = row[3]
+            receipt_data['owner'] = row[4]
+            receipt_data['commodity'] = row[5]
+            receipt_data['money_given'] = row[6]
+            receipt_data['created_date'] = row[7]
+    except Exception as error:
+        print(f"Error in fetching the receipt details - {error} \n\n{traceback.format_exc()}")
+    else:
+        print(">>>> Receipt data retrieved")
+        return render_template('receipt.html', data=receipt_data)
 
 
 # ---------------------------------------------------------------------------------------------------------------------

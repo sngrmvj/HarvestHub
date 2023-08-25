@@ -410,17 +410,3 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True, port=5000, host='0.0.0.0')
-
-
-
-
-
-with app.app_context():
-    db.session.execute(
-        update_query,
-        {
-            'new_weight': 100,  # New weight value
-            'bag_id': 'B456'    # Bag ID to identify the row to update
-        }
-    )
-    db.session.commit()
