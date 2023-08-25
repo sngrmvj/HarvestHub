@@ -177,35 +177,31 @@
 
         <div class="main">
             <div class="main_div">
-                <div id="myGrid" class="ag-theme-alpine" style="height: 500px"></div>
-                <script type="text/javascript">
-                    const gridOptions = {
-                        columnDefs: [
-                            { field: "Farmer Name" },
-                            { field: "Agent ID" },
-                            { field: "Date" },
-                            { field: "View" },
-                        ],
+                <div id="myGrid" style="height: 900px;width:100%" class="ag-theme-alpine"></div>
 
-                        // default col def properties get applied to all columns
-                        defaultColDef: {sortable: true, filter: true},
-
-                        rowSelection: 'multiple', // allow rows to be selected
-                        animateRows: true, // have rows animate to new positions when sorted
-                         // example event handler
-                        onCellClicked: params => {
-                         console.log('cell was clicked', params)
-                        }
-                    };
-                    const eGridDiv = document.getElementById("myGrid");
-                    new agGrid.Grid(eGridDiv, gridOptions);
-
-                    // Fetch data from server
-                    fetch("{{ url_for('get_receipts') }}")
-                    .then(response => response.json())
-                    .then(data => {
-                      // load fetched data into grid
-                      gridOptions.api.setRowData(data);
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var rowData = '{{ row_data | tojson | safe }}';
+                        var gridOptions = {
+                            columnDefs: [
+                                { headerName: "Agent ID", pinned: true},
+                                { headerName: "Farmer ID", pinned: true},
+                                { headerName: "Truck ID", },
+                                { headerName: "Bag ID", },
+                                { headerName: "Owner", },
+                                { headerName: "Commodity", },
+                                { headerName: "Selling Price", },
+                                { headerName: "Bag Weight", },
+                                { headerName: "Date of sell", }
+                            ],
+                            rowData: rowData,
+                            defaultColDef: {
+                                sortable: true,
+                                resizable: true
+                            }
+                        };
+                        var gridDiv = document.querySelector('#myGrid');
+                        new agGrid.Grid(gridDiv, gridOptions);
                     });
                 </script>
             </div>

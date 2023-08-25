@@ -36,7 +36,8 @@ def farmer_page():
         # Here in this case if the cookie is not there we need to make sure that farmer logs in
         return render_template('login.html', message=arg_message)
     else:
-        return render_template('index.html', message=arg_message)
+        all_receipts = get_receipts()
+        return render_template('index.html', message=arg_message, row_data=all_receipts)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -83,7 +84,7 @@ def login_form():
 # ---------------------------------------------------------------------------------------------------------------------
 # >>>> Fetch the list of receipts for the farmer
 # ---------------------------------------------------------------------------------------------------------------------
-@app.route('/farmer/allReceipts', methods=['GET'])
+# @app.route('/farmer/allReceipts', methods=['GET'])
 def get_receipts():
 
     all_receipts = []
@@ -91,12 +92,23 @@ def get_receipts():
     try:
         receipts_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, weight, created_date FROM agent_farmer"
         result = db.session.execute(receipts_query)
+        # Todo - Check whether to use result=result.fetchall()
         for row in result:
-            all_receipts.append([row.agent_id, row.farmer_id, row.truck_id, row.bag_id, row.owner, row.commodity, row.money_given, row.weight, row.created_date])
+            all_receipts.append({
+                'Agent ID': row.agent_id, 
+                'Farmer ID': row.farmer_id, 
+                'Truck ID': row.truck_id, 
+                'Bag ID': row.bag_id, 
+                'Owner': row.owner, 
+                'Commodity': row.commodity, 
+                'Selling Price': row.money_given, 
+                'Bag Weight': row.weight, 
+                'Date of sell': row.created_date
+            })
     except Exception as error:
         print(f"Error in fetching the all receipt details - {error} \n\n{traceback.format_exc()}")
     
-    return jsonify({'data': all_receipts})
+    return all_receipts
 
 
 
@@ -106,7 +118,7 @@ def get_receipts():
 # ---------------------------------------------------------------------------------------------------------------------
 # >>>> Display of the receipt
 # ---------------------------------------------------------------------------------------------------------------------
-@app.route('/farmer/receipt', methods=['PUT'])
+# @app.route('/farmer/receipt', methods=['PUT'])
 def display_receipt():
 
     data = {
@@ -116,7 +128,7 @@ def display_receipt():
 
     username, receipt_data = None, {}
 
-    # Todo - You can fetch it from the ag-grid column itself.
+    # Todo - You can fetch it from the ag-grid row itself by sending the command or we can add a modal to display and download as pdf required 
 
     try:
         pass
