@@ -90,7 +90,7 @@ def get_receipts():
     all_receipts = []
 
     try:
-        receipts_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, weight, created_date FROM agent_farmer"
+        receipts_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight, created_date FROM agent_farmer"
         result = db.session.execute(receipts_query)
         # Todo - Check whether to use result=result.fetchall()
         for row in result:
@@ -101,7 +101,7 @@ def get_receipts():
                 'Bag ID': row.bag_id, 
                 'Owner': row.owner, 
                 'Commodity': row.commodity, 
-                'Selling Price': row.money_given, 
+                'Selling Price': row.price_kg, 
                 'Bag Weight': row.weight, 
                 'Date of sell': row.created_date
             })
@@ -137,7 +137,7 @@ def display_receipt():
         # for row in result:
         #     username = row[0]
 
-        # receipt_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, created_date FROM agent_farmer WHERE bag_id= :bag_id"
+        # receipt_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, created_date FROM agent_farmer WHERE bag_id= :bag_id"
         # result = db.session.execute(receipt_query, {"bag_id": data['bag_id']})
 
         # for row in result:
@@ -147,7 +147,7 @@ def display_receipt():
         #     receipt_data['bag_id'] = row[3]
         #     receipt_data['owner'] = row[4]
         #     receipt_data['commodity'] = row[5]
-        #     receipt_data['money_given'] = row[6]
+        #     receipt_data['price_kg'] = row[6]
         #     receipt_data['created_date'] = row[7]
     except Exception as error:
         print(f"Error in fetching the receipt details - {error} \n\n{traceback.format_exc()}")

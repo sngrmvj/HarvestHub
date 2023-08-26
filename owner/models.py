@@ -39,7 +39,7 @@ class Agent_Farmer(db.Model):
     bag_id = db.Column(db.String(80), unique=True, nullable=False)
     owner = db.Column(db.String(80), default="HarvestHub_Owner")
     commodity = db.Column(db.String(80), nullable=False)
-    money_given = db.Column(db.Integer, nullable=False)
+    price_kg = db.Column(db.Integer, nullable=False)
     weight = db.Column(db.Float, nullable=False)
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
 

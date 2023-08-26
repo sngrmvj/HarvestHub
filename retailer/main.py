@@ -76,7 +76,7 @@ def get_all_commodities():
 
     try:
         # Run native SQL query
-        result = db.session.execute("SELECT distinct(commodities) FROM warehouse")
+        result = db.session.execute("SELECT distinct(commodities), price_kg, profit_percent FROM warehouse")
 
         if not result:
             return jsonify({'error': "Data not retrieved"}), 500
@@ -84,7 +84,12 @@ def get_all_commodities():
         commodities = []
         # Access the result
         for row in result:
-            commodities.append(row)
+            # Calculate selling price
+            selling_price = row.price_kg + (row.price_kg * (row.profit_percent / 100))
+            commodities.append([
+                row.commodities,
+                selling_price
+            ])
         else:
             return jsonify({'data': commodities}), 200
     except Exception as error:

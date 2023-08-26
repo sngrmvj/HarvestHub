@@ -175,54 +175,40 @@
             <label style="font-size: 12px;">(Owner Portal)</label>
         </div><br/>
 
-        <div style="padding: 1opx;margin-left: 20px;">
-            <button class="btn" id="add_agent">Add Agent</button> 
-            <button class="btn" id="add_farmer">Add Farmer</button>
-            <button class="btn" id="statistics">Statistics</button>
+
+        <div style="padding: 1opx;margin-left: 50px;">
+            <button class="btn" id="back_button">Back</button> 
             <script>
-                document.getElementById("add_agent").addEventListener("click", function() {
-                    window.location.href = "{{ url_for('agent_page') }}";
-                });
-                document.getElementById("add_farmer").addEventListener("click", function() {
-                    window.location.href = "{{ url_for('farmer_page') }}";
-                });
-                document.getElementById("add_farmer").addEventListener("click", function() {
-                    window.location.href = "{{ url_for('get_monthly_statistics') }}";
+                document.getElementById("back_button").addEventListener("click", function() {
+                    window.location.href = "{{ url_for('owner_page') }}";
                 });
             </script>
-        </div>
+        </div><br/>
 
         <div class="main">
             <div class="main_div">
-                <div id="myGrid" class="ag-theme-alpine" style="height: 500px"></div>
-                <script type="text/javascript">
-                    const gridOptions = {
-                        columnDefs: [
-                            { field: "Farmer Name" },
-                            { field: "Agent ID" },
-                            { field: "Date" },
-                            { field: "View" },
-                        ],
+                <div id="myGrid" style="height: 900px;width:100%" class="ag-theme-alpine"></div>
 
-                        // default col def properties get applied to all columns
-                        defaultColDef: {sortable: true, filter: true},
-
-                        rowSelection: 'multiple', // allow rows to be selected
-                        animateRows: true, // have rows animate to new positions when sorted
-                         // example event handler
-                        onCellClicked: params => {
-                         console.log('cell was clicked', params)
-                        }
-                    };
-                    const eGridDiv = document.getElementById("myGrid");
-                    new agGrid.Grid(eGridDiv, gridOptions);
-
-                    // Fetch data from server
-                    fetch("{{ url_for('add_commodities') }}")
-                    .then(response => response.json())
-                    .then(data => {
-                      // load fetched data into grid
-                      gridOptions.api.setRowData(data);
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var rowData = '{{ row_data | tojson | safe }}';
+                        var gridOptions = {
+                            columnDefs: [
+                                { headerName: "Bag ID", pinned: true},
+                                { headerName: "Farmer ID", pinned: true},
+                                { headerName: "Commodity", },
+                                { headerName: "Price kg", },
+                                { headerName: "Selling Price", },
+                                { headerName: "Date of sell", }
+                            ],
+                            rowData: rowData,
+                            defaultColDef: {
+                                sortable: true,
+                                resizable: true
+                            }
+                        };
+                        var gridDiv = document.querySelector('#myGrid');
+                        new agGrid.Grid(gridDiv, gridOptions);
                     });
                 </script>
             </div>

@@ -172,7 +172,7 @@ def send_truck(agent_id):
                 if b'items' in retrieved_data:
                     stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
 
-                agent_farmer_query = "INSERT INTO agent_farmer (agent_id, farmer_id, truck_id, bag_id, owner, commodity, money_given, weight) VALUES (:agent_id, :farmer_id, :truck_id, :bag_id, :owner, :commodity, :money_given, :weight)"
+                agent_farmer_query = "INSERT INTO agent_farmer (agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight) VALUES (:agent_id, :farmer_id, :truck_id, :bag_id, :owner, :commodity, :price_kg, :weight)"
 
                 for item in stored_list:
                     with app.app_context():
@@ -185,7 +185,7 @@ def send_truck(agent_id):
                                 'bag_id': item['bag_id'],
                                 'owner': 'HarvestHub_Owner',
                                 'commodity': item['commodity'],
-                                'money_given': item['price'],
+                                'price_kg': item['price'],
                                 'weight': item['weight']
                             }
                         )
