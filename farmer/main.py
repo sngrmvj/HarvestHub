@@ -1,5 +1,5 @@
-from flask import Flask, Response, render_template, request, redirect, url_for, make_response, jsonify
-import json, uuid, datetime, traceback
+from flask import Flask, render_template, request, redirect, url_for, make_response
+import datetime, traceback
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 

@@ -1,5 +1,5 @@
-from flask import Flask, Response, render_template, request, redirect, url_for, make_response
-import json, uuid, datetime, redis, traceback, os
+from flask import Flask, render_template, request, redirect, url_for, make_response
+import json, uuid, datetime, redis, traceback, os, copy
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
@@ -150,12 +150,7 @@ def insert_commodity_bag():
 
 
 
-# ---------------------------------------------------------------------------------------------------------------------------------
-# >>>> Submission of Bag Data
-# ---------------------------------------------------------------------------------------------------------------------------------
-# @app.route('/agent/truck', methods=['POST'])
 def send_truck(agent_id):
-
 
     """ 
         The idea is we use this function to update the agent_farmer database, we empty the agent_id's with empty []
@@ -164,6 +159,7 @@ def send_truck(agent_id):
     """
 
     truck_id = str(uuid.uuid4())
+    info_to_owner = None
 
     try:
         with redis.Redis(host='localhost', port=6379, db=1, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
@@ -171,6 +167,7 @@ def send_truck(agent_id):
             if retrieved_data:
                 if b'items' in retrieved_data:
                     stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    info_to_owner = copy.deepcopy(stored_list)
 
                 agent_farmer_query = "INSERT INTO agent_farmer (agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight) VALUES (:agent_id, :farmer_id, :truck_id, :bag_id, :owner, :commodity, :price_kg, :weight)"
 
@@ -195,7 +192,22 @@ def send_truck(agent_id):
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
         return False 
     else:
-        return True
+        if info_to_owner:
+            with redis.Redis(host='localhost', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+                for item in stored_list:
+                    temp = {
+                        'agent_id': item['agent_id'],  # New weight value
+                        'farmer_id': item['farmer_id'],   # Bag ID to identify the row to update
+                        'truck_id': truck_id,
+                        'bag_id': item['bag_id'],
+                        'owner': 'HarvestHub_Owner',
+                        'commodity': item['commodity'],
+                        'price_kg': item['price'],
+                        'weight': item['weight']
+                    }
+                    redis_connection.hmset(item['bag_id'], temp)
+                    print(f"Insertion into redis for database 2 - {item['bag_id']}")
+
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------

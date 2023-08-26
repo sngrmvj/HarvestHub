@@ -195,11 +195,47 @@
         <div class="main">
             <div class="main_div">
                 <div style="display: flex; flex-direction: row;flex-wrap: wrap;">
-                    {% for key, value in data.items() %}
+                    {% for item in data %}
                         <div style="padding: 10px;margin-right: 10px; border-radius: 5px; box-shadow: 1px 1px 5px 0 rgba(205, 206, 217, 0.5)">
-                            <label><b>{{ key }}</b></label> <br/>
-                            <label>{{ value }}</label>
+                            <form action="{{ url_for('add_commodity') }}" method="POST" id="agent_form">
+                                <div>
+                                    <label><b>Agent ID</b></label> <br/>
+                                    <label>{{ item['agent_id'] }}</label>
+                                </div> <br/>
+                                <div>
+                                    <label><b>Farmer ID</b></label> <br/>
+                                    <label>{{ item['farmer_id'] }}</label>
+                                </div> <br/>
+                                <div>
+                                    <label><b>truck ID</b></label> <br/>
+                                    <label>{{ item['truck_id'] }}</label>
+                                </div> <br/>
+                                <div>
+                                    <label><b>Bag ID</b></label> <br/>
+                                    <label>{{ item['bag_id'] }}</label>
+                                </div> <br/>
+                                <div>
+                                    <label><b>Commodity</b></label> <br/>
+                                    <label>{{ item['commodity'] }}</label>
+                                </div> <br/>
+                                <div>
+                                    <label><b>Price/Kg</b></label> <br/>
+                                    <label>{{ item['price_kg'] }}</label>
+                                </div> <br/>
+                                <div>
+                                    <label><b>Total Weight</b></label> <br/>
+                                    <label>{{ item['weight'] }}</label>
+                                </div> <br/>
+                                <div>
+                                    <label><b>Profit Percentage</b></label> <br/>
+                                    <input type="number" name="profit_percent" id="profit_percent" autocomplete="off" min="5" max="10" required />
+                                </div> <br/>
+                                <div>
+                                    <input class="btn" type="submit" value="Submit"><br/>
+                                </div>
+                            </form>
                         </div> <br/>
+
                     {% endfor %}
                 </div>
             </div>

@@ -1,1 +1,6 @@
 flask
+redis
+Flask-SQLAlchemy
+flask-cors
+psycopg2-binary
+SQLAlchemy

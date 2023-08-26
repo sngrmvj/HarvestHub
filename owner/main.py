@@ -1,7 +1,7 @@
-from flask import render_template, request, redirect, url_for, jsonify
-import random, string, traceback, redis, os, json
+from flask import render_template, request, redirect, url_for
+import random, string, traceback, redis, os
 from setup import app, db
-from models import Farmer, Agent, Agent_Farmer, SellStatistics, WareHouse
+from models import Farmer, Agent, SellStatistics, WareHouse
 
 
 
@@ -125,7 +125,9 @@ def fetch_new_commodities():
     except Exception as error:
         print(f"Error in getting the date from redis for the owner - {error} \n\n{traceback.format_exc()}")
     else:
-        return retrieved_dict
+        temp = []
+        for item in retrieved_dict:
+            temp.append(retrieved_dict[item])
     
     return {}
 
@@ -165,7 +167,7 @@ def add_commodity():
             price_kg=request.form.get('price_kg'),
             weight=request.form.get('weight'),
             delivered=True,
-            profit_percent=request.form.get('weight')
+            profit_percent=request.form.get('profit_percent')
         )
         db.session.add(warehouse)
         db.session.commit()
