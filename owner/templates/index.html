@@ -194,37 +194,14 @@
 
         <div class="main">
             <div class="main_div">
-                <div id="myGrid" class="ag-theme-alpine" style="height: 500px"></div>
-                <script type="text/javascript">
-                    const gridOptions = {
-                        columnDefs: [
-                            { field: "Farmer Name" },
-                            { field: "Agent ID" },
-                            { field: "Date" },
-                            { field: "View" },
-                        ],
-
-                        // default col def properties get applied to all columns
-                        defaultColDef: {sortable: true, filter: true},
-
-                        rowSelection: 'multiple', // allow rows to be selected
-                        animateRows: true, // have rows animate to new positions when sorted
-                         // example event handler
-                        onCellClicked: params => {
-                         console.log('cell was clicked', params)
-                        }
-                    };
-                    const eGridDiv = document.getElementById("myGrid");
-                    new agGrid.Grid(eGridDiv, gridOptions);
-
-                    // Fetch data from server
-                    fetch("{{ url_for('add_commodities') }}")
-                    .then(response => response.json())
-                    .then(data => {
-                      // load fetched data into grid
-                      gridOptions.api.setRowData(data);
-                    });
-                </script>
+                <div style="display: flex; flex-direction: row;flex-wrap: wrap;">
+                    {% for key, value in data.items() %}
+                        <div style="padding: 10px;margin-right: 10px; border-radius: 5px; box-shadow: 1px 1px 5px 0 rgba(205, 206, 217, 0.5)">
+                            <label><b>{{ key }}</b></label> <br/>
+                            <label>{{ value }}</label>
+                        </div> <br/>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </body>
