@@ -4,13 +4,25 @@ import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import './PurchaseHistory.css'; // Add your CSS styles here
+import { ALL_ORDERS } from '../../constants';
 
 const PurchaseHistory = () => {
     const [rowData, setRowData] = useState([]);
 
     useEffect(() => {
-        // Fetch purchase history from the backend using Axios
-        axios.get('your_backend_endpoint')
+        const options = {
+            withCredentials: true,
+            credentials: 'same-origin',
+
+            headers: {
+                'Accept': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+                'Content-Type': 'application/json',
+            },
+        };
+        
+        axios.get(ALL_ORDERS, options)
             .then(response => {
                 setRowData(response.data);
             })
@@ -22,6 +34,7 @@ const PurchaseHistory = () => {
         { headerName: 'Item', field: 'item', sortable: true, filter: true },
         { headerName: 'Quantity', field: 'quantity', sortable: true, filter: true },
         { headerName: 'Price', field: 'price', sortable: true, filter: true },
+        { headerName: 'View', field: 'view'},
     ];
 
     return (
