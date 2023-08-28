@@ -9,7 +9,7 @@ class Retailer(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(400), nullable=False)
-    phonenumber = db.Column(db.Integer(10), nullable=False)
+    phonenumber = db.Column(db.String(10), nullable=False)
 
     def check_password(self, password):
         return self.password == password
@@ -24,7 +24,7 @@ class Purchases(db.Model):
     owner = db.Column(db.String(80), default="HarvestHub_Owner")
     retailer_email = db.Column(db.String(120), unique=True, nullable=False)
     retailer_address = db.Column(db.String(400), nullable=False)
-    retailer_phonenumber = db.Column(db.Integer(10), nullable=False)
+    retailer_phonenumber = db.Column(db.String(10), nullable=False)
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
     commodity = db.Column(db.String(80), nullable=False)
 

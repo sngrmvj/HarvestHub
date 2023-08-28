@@ -19,17 +19,12 @@ const Signup = () => {
     const [password, setPassword] = useState("");
     const [address, setAddress] = useState("");
     const [phonenumber, setPhonenumber] = useState("");
-    const [selectedOption, setSelectedOption] = useState('');
 
     useEffect(() => {
         if(localStorage.getItem('isLoggedIn') === "true"){
-            navigate("/exercises");
+            navigate("/menu");
         }
     });
-
-    const handleOptionChange = (event) => {
-        setSelectedOption(event.target.value);
-    };
 
 
     const navigateToLogin = () => {
@@ -38,11 +33,14 @@ const Signup = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Perform registration here
+        
+
         var data = {
             email: email,
             password: password,
             username: name,
+            address: address,
+            phonenumber: phonenumber
         }
 
         const options = {
@@ -59,7 +57,7 @@ const Signup = () => {
             data : data
         };
 
-        axios.post(`${SIGNUPURL}?type=${selectedOption}`, options)
+        axios.post(`${SIGNUPURL}`, options)
         .then(result=>{
             if(result.status === 200){
                 navigate("/");
@@ -81,7 +79,7 @@ const Signup = () => {
         <span>
             <div style={{padding:"20px"}}>
                 <header style={{color:"#2E8DCD", fontSize:"20px"}}><b>HarvestHub</b></header>
-            </div><br/>
+            </div><br/><br/><br/><br/>
 
             <span className='signupmain'>
                 <div className='signupdiv'>
@@ -135,10 +133,11 @@ const Signup = () => {
 
                                 <label htmlFor="tel">Phone number:</label><br/>
                                 <input
-                                    type="tel"
-                                    id="tel"
+                                    type="number"
+                                    id="number"
                                     pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}"
-                                    value={tel}
+                                    value={phonenumber}
+                                    maxLength="10" minLength="10"
                                     onChange={(e) => setPhonenumber(e.target.value)}
                                 /><br/><br/>
 

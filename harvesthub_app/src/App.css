@@ -36,3 +36,27 @@
     transform: rotate(360deg);
   }
 }
+
+
+
+.btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 1.5;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  padding: 10px 20px;
+  letter-spacing: 0.05rem;
+  background-color: #2E8DCD;
+  color:white;
+  border-radius: 5px;
+  border: 2px solid #2E8DCD;
+}
+
+.btn:hover { 
+  /* outline: 2px dotted #55d7dc;  */
+  border: 2px solid #2E8DCD;
+  background-color: transparent;
+  color:black
+}

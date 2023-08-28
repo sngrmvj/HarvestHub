@@ -13,7 +13,7 @@ services:
     restart: always
   redis:
     image: bitnami/redis:latest
-    container_name: nect-redis
+    container_name: harvesthub-redis
     ports:
       - 6379:6379
     environment:
@@ -21,60 +21,60 @@ services:
     volumes:
       - redisvol:/bitnami/redis/data
     restart: always
-  owner_portal:
-    image: owner-portal:latest  # Update the repository name and tag
-    build:
-      context: ./owner  # Path to your agent portal application
-      dockerfile: Dockerfile           # Path to your Dockerfile
-    ports:
-      - 5003:5003
-    environment:
-      REDIS_PASSWORD: default
-      POSTGRES_PASSWORD: root
-    depends_on:
-      - postgres
-      - redis
-    restart: always
-  agent_portal:
-    image: agent-portal:latest  # Update the repository name and tag
-    build:
-      context: ./agent  # Path to your agent portal application
-      dockerfile: Dockerfile           # Path to your Dockerfile
-    ports:
-      - 5001:5001
-    environment:
-      REDIS_PASSWORD: default
-      POSTGRES_PASSWORD: root
-    depends_on:
-      - postgres
-      - owner_portal
-    restart: always
-  farmer_portal:
-    image: farmer-portal:latest  # Update the repository name and tag
-    build:
-      context: ./farmer  # Path to your agent portal application
-      dockerfile: Dockerfile           # Path to your Dockerfile
-    ports:
-      - 5002:5002
-    depends_on:
-      - postgres
-      - owner_portal
-    restart: always
-  retailer_service:
-    image: retailer-service:latest  # Update the repository name and tag
-    build:
-      context: ./retailer  # Path to your agent portal application
-      dockerfile: Dockerfile           # Path to your Dockerfile
-    ports:
-      - 5000:5000
-    environment:
-      SECRET_KEY: x
-      REDIS_PASSWORD: default
-      POSTGRES_PASSWORD: root
-    depends_on:
-      - postgres
-      - redis
-    restart: always
+  # owner_portal:
+  #   image: owner-portal:latest  # Update the repository name and tag
+  #   build:
+  #     context: ./owner  # Path to your agent portal application
+  #     dockerfile: Dockerfile           # Path to your Dockerfile
+  #   ports:
+  #     - 5003:5003
+  #   environment:
+  #     REDIS_PASSWORD: default
+  #     POSTGRES_PASSWORD: root
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   restart: always
+  # agent_portal:
+  #   image: agent-portal:latest  # Update the repository name and tag
+  #   build:
+  #     context: ./agent  # Path to your agent portal application
+  #     dockerfile: Dockerfile           # Path to your Dockerfile
+  #   ports:
+  #     - 5001:5001
+  #   environment:
+  #     REDIS_PASSWORD: default
+  #     POSTGRES_PASSWORD: root
+  #   depends_on:
+  #     - postgres
+  #     - owner_portal
+  #   restart: always
+  # farmer_portal:
+  #   image: farmer-portal:latest  # Update the repository name and tag
+  #   build:
+  #     context: ./farmer  # Path to your agent portal application
+  #     dockerfile: Dockerfile           # Path to your Dockerfile
+  #   ports:
+  #     - 5002:5002
+  #   depends_on:
+  #     - postgres
+  #     - owner_portal
+  #   restart: always
+  # retailer_service:
+  #   image: retailer-service:latest  # Update the repository name and tag
+  #   build:
+  #     context: ./retailer  # Path to your agent portal application
+  #     dockerfile: Dockerfile           # Path to your Dockerfile
+  #   ports:
+  #     - 5000:5000
+  #   environment:
+  #     SECRET_KEY: x
+  #     REDIS_PASSWORD: default
+  #     POSTGRES_PASSWORD: root
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   restart: always
   # harvest-hub:
   #   image: harvesthub:latest  # Update the repository name and tag
   #   build:

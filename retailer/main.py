@@ -21,20 +21,25 @@ def login_form():
     authenticated = False  # Replace with your authentication logic
 
     data = request.get_json()
+    data = data['data']
     try:
         retailer_results = Retailer.query.filter_by(email=data['email']).all()
     except Exception as error:
         print(f"Error in fetching the login details - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in fetching the login details - {error}"}), 500
     else:
+        username = None
         if retailer_results:
-            authenticated = retailer_results.check_password(data['password'])
+            for item in retailer_results:
+                authenticated = item.password == data['password']
+                username = item.username
+
 
     if authenticated:
         payload = {'email': data['email'], 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=90)}
         token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
         # Create a response object
-        response = make_response(jsonify({'message': 'Authentication successful'}))
+        response = make_response(jsonify({'fullname': username, 'email': data['email'], 'valid': True}))
         # Set a cookie to indicate successful login with 90 minutes of expiry
         response.set_cookie('retailer_token', token, secure=True, expires=datetime.datetime.now() + datetime.timedelta(minutes=90), httponly=True)
         return response
@@ -53,8 +58,9 @@ def login_form():
 def register():
 
     data = request.get_json()
+    data = data['data']
     try:
-        retailer = Retailer(data['email'], data['username'], data['password'], data['address'], data['phonenumber']) 
+        retailer = Retailer(email=data['email'], username=data['username'], password=data['password'], address=data['address'], phonenumber=data['phonenumber']) 
         db.session.add(retailer)
         db.session.commit()
     except Exception as error:
@@ -414,4 +420,4 @@ def purchase():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=True, port=5004, host='0.0.0.0')

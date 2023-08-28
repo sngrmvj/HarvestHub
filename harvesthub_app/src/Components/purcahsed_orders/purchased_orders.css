@@ -1,0 +1,16 @@
+/* PurchaseHistory.css */
+.purchase-history-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+.ag-grid-container {
+    height: 400px;
+    width: 100%;
+    margin-top: 20px;
+}

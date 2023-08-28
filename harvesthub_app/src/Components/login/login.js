@@ -8,7 +8,7 @@ import React from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { LOGINURL } from '../../constants';
+import { LOGINURL } from '../../constants.js';
 
 
 
@@ -17,21 +17,16 @@ const Login = () => {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [selectedOption, setSelectedOption] = useState('');
 
     useEffect(() => {
         if(localStorage.getItem('isLoggedIn') === "true"){
-            navigate("/exercises")
+            navigate("/menu")
         }
     },[]);
 
 
     const navigateToSignUp = () => {
         navigate("/register");
-    };
-
-    const handleOptionChange = (event) => {
-        setSelectedOption(event.target.value);
     };
 
     const handleSubmit = (e) => {
@@ -54,21 +49,12 @@ const Login = () => {
             }
         };
 
-        axios.put(`${LOGINURL}?type=${selectedOption}`, options) // if promise get you success, control enters .then
+        axios.put(`${LOGINURL}`, options) // if promise get you success, control enters .then
         .then(res => {
             if (res.status === 200) {
                 localStorage.setItem('isLoggedIn',true);
                 localStorage.setItem('fullname', res.data.fullname);
-                if (selectedOption === 'Supplier'){
-                    localStorage.setItem('supplierEmail', res.data.email);
-                    localStorage.setItem('user_type', 'Supplier');
-                    navigate("/suppliermenu");
-                } else {
-                    localStorage.setItem('consumerEmail', res.data.email);
-                    localStorage.setItem('user_type', 'Consumer');
-                    navigate("/consumermenu");
-                }
-
+                navigate("/menu");
             }
         })
         .catch(error => {
@@ -82,7 +68,7 @@ const Login = () => {
         <span>
             <div style={{padding:"20px"}}>
                 <header style={{color:"#2E8DCD", fontSize:"20px"}}><b>HarvestHub</b></header>
-            </div><br/>
+            </div><br/><br/><br/>
 
             <span className='main'>
                 <div className='maindiv'>
@@ -115,25 +101,6 @@ const Login = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 /><br/><br/>
-
-                                <div>
-                                    <label className="container" style={{fontSize:"18px"}}>Supplier
-                                        <input type="radio"
-                                            value="Supplier"
-                                            checked={selectedOption === 'Supplier'}
-                                            onChange={handleOptionChange}
-                                        />
-                                        <span className="checkmark"></span>
-                                    </label><br/>
-                                    <label className="container" style={{fontSize:"18px"}}>Consumer
-                                        <input type="radio"
-                                            value="Consumer"
-                                            checked={selectedOption === 'Consumer'}
-                                            onChange={handleOptionChange}
-                                        />
-                                        <span className="checkmark"></span>
-                                    </label>
-                                </div> <br/><br/>
 
                                 <button type="submit" className='btn'>Login</button><br/><br/>
 
