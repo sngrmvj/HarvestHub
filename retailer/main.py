@@ -1,5 +1,5 @@
 from flask import request, make_response, jsonify
-import traceback, datetime, redis, uuid, jwt, os
+import traceback, datetime, redis, uuid, jwt, os, json
 from models import Purchases, Retailer
 from setup import app, db
 
@@ -82,7 +82,7 @@ def get_all_commodities():
 
     try:
         # Run native SQL query
-        result = db.session.execute("SELECT distinct(commodities), price_kg, profit_percent FROM warehouse")
+        result = db.session.execute("SELECT distinct(commodities) FROM warehouse")
 
         if not result:
             return jsonify({'error': "Data not retrieved"}), 500
@@ -90,12 +90,8 @@ def get_all_commodities():
         commodities = []
         # Access the result
         for row in result:
-            # Calculate selling price
-            selling_price = row.price_kg + (row.price_kg * (row.profit_percent / 100))
-            commodities.append([
-                row.commodities,
-                selling_price
-            ])
+            # selling_price = row.price_kg + (row.price_kg * (row.profit_percent / 100))
+            commodities.extend(row.commodities)
         else:
             return jsonify({'data': commodities}), 200
     except Exception as error:
@@ -208,10 +204,11 @@ def get_cart():
     try:
         with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             retrieved_data = redis_connection.hgetall(decoded_payload['email'])
-            # Convert the retrieved bytes to a Python dictionary
-            retrieved_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in retrieved_data.items()}
-            if retrieved_dict:
-                return jsonify({'data':retrieved_dict}), 200
+            if retrieved_data:
+                # Deserialize the 'items' field value back into a list
+                if b'items' in retrieved_data:
+                    stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    return jsonify({'data': stored_list}), 200
             else:
                 return jsonify({'message': "Cart not available"}), 404
     except Exception as error:
@@ -240,11 +237,49 @@ def add_to_cart():
 
     try:
         data = request.get_json()
+        # Construct the native SQL query
+        sql_query = "SELECT * FROM warehouse WHERE commodity = :commodity ORDER BY commodity"
+        # Execute the query and fetch the results
+        rows_with_commodity = db.session.execute(sql_query, {"commodity": data['commodity']}).fetchall()
+        if rows_with_commodity:
+            return jsonify({"message": "Item out of stock"}), 404
+        redis_insert = {
+            'farmer_id': set(), 'bag_id': set(), 'weight': 0, 'price': 0, 'commodity': data['item']
+        }
+        for row in rows_with_commodity:
+            selling_price = row.price_kg + (row.price_kg * (row.profit_percent / 100))
+            # We are not updating it in database as it should be updated only once the purchase happens.
+            # Note - Because of this the price keeps varying.
+            # Note - Stock might go out of stock, In that case we send out that this much is available 
+            if row.weight > data['quantity']:
+                redis_insert['farmer_id'].add(row.farmer_id)
+                redis_insert['bag_id'].add(row.bag_id)
+                redis_insert['weight'] += (row.weight - data['quantity'])
+                redis_insert['price'] += redis_insert['weight'] * selling_price
+            elif row.weight < data['quantity']:
+                redis_insert['farmer_id'].add(row.farmer_id)
+                redis_insert['bag_id'].add(row.bag_id)
+                redis_insert['weight'] += row.weight
+                redis_insert['price'] += redis_insert['weight'] * selling_price
+            elif row.weight == data['quantity']:
+                redis_insert['farmer_id'].add(row.farmer_id)
+                redis_insert['bag_id'].add(row.bag_id)
+                redis_insert['weight'] += row.weight
+                redis_insert['price'] += redis_insert['weight'] * selling_price
+            data['quantity'] -= row.weight
+
+        if data['quantity'] > 0:
+            return jsonify({'message': f"Quantity of {redis_insert['weight']} kgs is available for the {data['item']}"}), 404
+
         with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
-            redis_connection.hmset(decoded_payload['email'], data)
             retrieved_data = redis_connection.hgetall(decoded_payload['email'])
             if retrieved_data:
-                return jsonify({"message":"Added to the cart"}), 200
+                if b'items' in retrieved_data:
+                    stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    stored_list.append(redis_insert) # Append the data to the retrievd list
+                    redis_connection.hmset(decoded_payload['email'], {'items': json.dumps([stored_list])}) # Store it back to the redis
+                else:
+                    redis_connection.hmset(decoded_payload['email'], {'items': json.dumps([redis_insert])})
             else:
                 raise Exception("Error in adding the element to the cart")
     except Exception as error:
@@ -278,10 +313,18 @@ def delete_from_cart():
         with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             retrieved_data = redis_connection.hgetall(decoded_payload['email']) # retrieveing the data for the retailer email
             if retrieved_data:
-                retrieved_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in retrieved_data.items()} # Converting the binary ascii
-                del retrieved_dict[commodity] # Deleting
-                redis_connection.hmset(decoded_payload['email'], retrieved_dict) # Re-inserting into the redis
-                return jsonify({"message":"Added to the cart"}), 200
+                if b'items' in retrieved_data:
+                    stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    index = None
+                    for i in range(len(stored_list)):
+                        if stored_list[i]['commodity'] == commodity:
+                            index = i 
+                            break
+                    if index == None:
+                        return jsonify({'message': "Item not available to delete"}), 404
+                    del stored_list[index]
+                    redis_connection.hmset(decoded_payload['email'], {'items': json.dumps([stored_list])}) # Re-inserting into the redis
+                    return jsonify({'message': f'{commodity} deleted from the cart', 'data': stored_list}), 200
             else:
                 return jsonify({'message': "Cart data not available"}), 404
     except Exception as error:
@@ -413,14 +456,7 @@ def purchase():
     
     try:
         with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
-            for commodity in data['commodities']:
-                retrieved_data = redis_connection.hgetall(decoded_payload['email']) # retrieveing the data for the retailer email
-                if retrieved_data:
-                    retrieved_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in retrieved_data.items()} # Converting the binary ascii
-                    del retrieved_dict[commodity[0]] # Deleting
-                    print(f"Successfully deleted the commodity from the cart - {commodity[0]}")
-                else:
-                    return jsonify({'message': "Cart data not available"}), 404
+            retrieved_data = redis_connection.hmset(decoded_payload['email'], '') # retrieveing the data for the retailer email
     except Exception as error:
         is_successful = False
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")

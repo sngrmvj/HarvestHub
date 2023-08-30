@@ -57,11 +57,12 @@ const Cart = () => {
         axios.delete(`${DELETE_ITEM_IN_CART}?commodity=${itemToRemove}`, options)
         .then(res => {
             if (res.status === 200) {
-                toast.success(`${itemToRemove} is removed from the cart`)
+                toast.success(res.data.message);
+                setGroceries(res.data.data);
             }
         })
         .catch(error => {
-            toast.error("Check credentials")
+            toast.error(`Error in removal of the item from cart - ${error}`);
         })
         setGroceries(updatedCart);
     };
