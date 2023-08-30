@@ -8,6 +8,7 @@ const ADD_TO_CART = `${BASE_URL}/retailer/cart`;
 const ALL_ORDERS = `${BASE_URL}/retailer/receipts`;
 const GET_RECEIPT = `${BASE_URL}/retailer/receipt`;
 const PURCHASE_ORDER = `${BASE_URL}/retailer/purchase`;
+const VALIDATE_USER = `${BASE_URL}/retailer/validate`;
 
 
 export {
@@ -19,5 +20,6 @@ export {
     DELETE_ITEM_IN_CART,
     ALL_ORDERS,
     GET_RECEIPT,
-    PURCHASE_ORDER
+    PURCHASE_ORDER,
+    VALIDATE_USER
 }

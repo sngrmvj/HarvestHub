@@ -8,7 +8,7 @@ import React from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { LOGINURL } from '../../constants.js';
+import { LOGINURL, VALIDATE_USER } from '../../constants.js';
 
 
 
@@ -22,8 +22,18 @@ const Login = () => {
         if(localStorage.getItem('isLoggedIn') === "true"){
             navigate("/menu")
         }
+        validAuthentication();
     },[]);
 
+    const validAuthentication = () => {
+        axios.get(`${VALIDATE_USER}`)
+        .then((res) => {
+            navigate("/menu");
+        })
+        .catch((error) => {
+            toast.error("User Autentication Failed");
+        })
+    }
 
     const navigateToSignUp = () => {
         navigate("/register");

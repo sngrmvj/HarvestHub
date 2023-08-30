@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DELETE_ITEM_IN_CART, GET_CART, PURCHASE_ORDER } from '../../constants';
+import { DELETE_ITEM_IN_CART, GET_CART, PURCHASE_ORDER, VALIDATE_USER } from '../../constants';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './cart.css';
@@ -17,6 +17,7 @@ const Cart = () => {
     useEffect(() => {
         // Fetch grocery details from the backend API
         // Replace 'your_backend_endpoint' with the actual API endpoint
+        validAuthentication();
         fetch(`${GET_CART}`)
             .then(response => response.json())
             .then(data => {
@@ -30,12 +31,24 @@ const Cart = () => {
     const logout = () =>{
         localStorage.setItem('isLoggedIn',false);
         localStorage.removeItem('email');
+        localStorage.removeItem('fullname');
         navigate("/")
     }
 
 
     const navigateToMenu = () =>{
         navigate('/menu');
+    }
+
+    const validAuthentication = () => {
+        axios.get(`${VALIDATE_USER}`)
+        .then((res) => {
+            console.log("Carry On!!");
+        })
+        .catch((error) => {
+            toast.error("User Autentication Failed");
+            logout();
+        })
     }
 
     // Remove item from the cart

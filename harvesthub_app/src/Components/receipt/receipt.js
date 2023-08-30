@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { GET_RECEIPT } from '../../constants';
+import { GET_RECEIPT, VALIDATE_USER } from '../../constants';
 
 
 const Receipt = () => {
@@ -27,10 +27,25 @@ const Receipt = () => {
     const logout = () =>{
         localStorage.setItem('isLoggedIn',false);
         localStorage.removeItem('email');
+        localStorage.removeItem('fullname');
         navigate("/")
     }
 
+    const validAuthentication = () => {
+        axios.get(`${VALIDATE_USER}`)
+        .then((res) => {
+            console.log("Carry On!!");
+        })
+        .catch((error) => {
+            toast.error("User Autentication Failed");
+            logout();
+        })
+    }
+
     useEffect(() => {
+
+        validAuthentication();
+
         let loginCheck = localStorage.getItem('isLoggedIn');
         if(loginCheck === 'false'){
             navigate("/");

@@ -7,7 +7,7 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import './purchased_orders.css'; // Add your CSS styles here
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { ALL_ORDERS } from '../../constants';
+import { ALL_ORDERS, VALIDATE_USER } from '../../constants';
 
 const PurchaseHistory = () => {
     const [rowData, setRowData] = useState([
@@ -27,10 +27,25 @@ const PurchaseHistory = () => {
     const logout = () =>{
         localStorage.setItem('isLoggedIn',false);
         localStorage.removeItem('email');
+        localStorage.removeItem('fullname');
         navigate("/")
     }
 
+    const validAuthentication = () => {
+        axios.get(`${VALIDATE_USER}`)
+        .then((res) => {
+            console.log("Carry On!!");
+        })
+        .catch((error) => {
+            toast.error("User Autentication Failed");
+            logout();
+        })
+    }
+
     useEffect(() => {
+
+        validAuthentication();
+
         const options = {
             withCredentials: true,
             credentials: 'same-origin',

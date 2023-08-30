@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { GET_COMMODITIES, ADD_TO_CART } from '../../constants.js';
+import { GET_COMMODITIES, ADD_TO_CART, VALIDATE_USER } from '../../constants.js';
 
 
 
@@ -27,6 +27,7 @@ const Menu = () => {
     const logout = () =>{
         localStorage.setItem('isLoggedIn',false);
         localStorage.removeItem('email');
+        localStorage.removeItem('fullname');
         navigate("/")
     }
 
@@ -35,12 +36,20 @@ const Menu = () => {
         if(loginCheck === 'false'){
             navigate("/");
         }
+        validAuthentication();
         fetch_the_commodities();
     })
 
 
     const validAuthentication = () => {
-        
+        axios.get(`${VALIDATE_USER}`)
+        .then((res) => {
+            console.log("Carry On!!");
+        })
+        .catch((error) => {
+            toast.error("User Autentication Failed");
+            logout();
+        })
     }
 
 

@@ -1,5 +1,5 @@
 from flask import request, make_response, jsonify
-import traceback, datetime, redis, uuid, jwt, os, json
+import traceback, datetime, redis, uuid, jwt, os, json, copy
 from models import Purchases, Retailer
 from setup import app, db
 
@@ -234,6 +234,18 @@ def add_to_cart():
             return 'Invalid token'
     else:
         return jsonify({'error': 'Not Authorised'}), 401
+    
+    BAG_IDS = None
+    try:
+        with redis.Redis(host='localhost', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            retrieved_data = redis_connection.hgetall('bag_ids')
+            if retrieved_data:
+                if b'items' in retrieved_data:
+                    stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    BAG_IDS = copy.deepcopy(stored_list)
+    except Exception as error:
+        print(f"Error in fetching the bag_ids - {error} \n\n{traceback.format_exc()}")
+
 
     try:
         data = request.get_json()
@@ -244,29 +256,32 @@ def add_to_cart():
         if rows_with_commodity:
             return jsonify({"message": "Item out of stock"}), 404
         redis_insert = {
-            'farmer_id': set(), 'bag_id': set(), 'weight': 0, 'price': 0, 'commodity': data['item']
+            'farmer_id': set(), 'bag_id': None, 'weight': 0, 'price': 0, 'commodity': data['item'], 'deleted_bags': set(), 'left_over_weight': None,
         }
         for row in rows_with_commodity:
             selling_price = row.price_kg + (row.price_kg * (row.profit_percent / 100))
-            # We are not updating it in database as it should be updated only once the purchase happens.
-            # Note - Because of this the price keeps varying.
-            # Note - Stock might go out of stock, In that case we send out that this much is available 
-            if row.weight > data['quantity']:
-                redis_insert['farmer_id'].add(row.farmer_id)
-                redis_insert['bag_id'].add(row.bag_id)
-                redis_insert['weight'] += (row.weight - data['quantity'])
-                redis_insert['price'] += redis_insert['weight'] * selling_price
-            elif row.weight < data['quantity']:
-                redis_insert['farmer_id'].add(row.farmer_id)
-                redis_insert['bag_id'].add(row.bag_id)
-                redis_insert['weight'] += row.weight
-                redis_insert['price'] += redis_insert['weight'] * selling_price
-            elif row.weight == data['quantity']:
-                redis_insert['farmer_id'].add(row.farmer_id)
-                redis_insert['bag_id'].add(row.bag_id)
-                redis_insert['weight'] += row.weight
-                redis_insert['price'] += redis_insert['weight'] * selling_price
-            data['quantity'] -= row.weight
+
+            if BAG_IDS and row.bag_id not in BAG_IDS:
+                # The idea is to avoid the usage of same bag_id across multiple people until purchase
+                # We are not updating it in database as it should be updated only once the purchase happens.
+                if row.weight > data['quantity']:
+                    redis_insert['farmer_id'].add(row.farmer_id)
+                    redis_insert['bag_id'] = row.bag_id
+                    redis_insert['weight'] += (row.weight - data['quantity'])
+                    redis_insert['price'] += redis_insert['weight'] * selling_price
+                    redis_insert['left_over_weight'] = row.weight - data['quantity']
+                elif row.weight < data['quantity']:
+                    redis_insert['farmer_id'].add(row.farmer_id)
+                    redis_insert['deleted_bags'].add(row.bag_id)
+                    redis_insert['weight'] += row.weight
+                    redis_insert['price'] += redis_insert['weight'] * selling_price
+                elif row.weight == data['quantity']:
+                    redis_insert['farmer_id'].add(row.farmer_id)
+                    redis_insert['deleted_bags'].add(row.bag_id)
+                    redis_insert['weight'] += row.weight
+                    redis_insert['price'] += redis_insert['weight'] * selling_price
+                data['quantity'] -= row.weight
+                BAG_IDS.append(row.bag_id)
 
         if data['quantity'] > 0:
             return jsonify({'message': f"Quantity of {redis_insert['weight']} kgs is available for the {data['item']}"}), 404
@@ -285,6 +300,16 @@ def add_to_cart():
     except Exception as error:
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in fetching the cart - {error}"}), 500
+    
+    try:
+        with redis.Redis(host='localhost', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            redis_connection.hmset(decoded_payload['email'], {'items': json.dumps([BAG_IDS])})
+    except Exception as error:
+        print(f"Error in setting the bag_ids - {error} \n\n{traceback.format_exc()}")
+        return jsonify({'error': f"Error in setting the bag_ids - {error}"}), 500
+    
+    return jsonify({'message': f"Successfully added to the cart"}), 200
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -354,119 +379,179 @@ def purchase():
         return jsonify({'error': 'Not Authorised'}), 401
 
 
-    data = request.get_json()
     purchase_id = str(uuid.uuid4())
     is_successful = True
 
-    try:
-        retailer_results = Retailer.query.filter_by(email=decoded_payload['email']).all()
+    PURCHASE_ITEMS, BAG_IDS = None, None
 
-        # We need to loop as the retailer_results is an object
-        for retailer in retailer_results:
-            purchase = Purchases(purchase_id, "HarvestHub_Owner", retailer.email, retailer.address, retailer.phonenumber, datetime.datetime.utcnow, data['commodities'])
-            db.session.add(purchase)
-            db.session.commit()
-    except Exception as error:
-        is_successful = False
-        print(f"Error in adding the purchase details - {error} \n\n{traceback.format_exc()}")
-        return jsonify({'error': f"Error in adding the purchase details - {error}"}), 500
-
-    try:
-
-        update_weight_query = """
-            UPDATE warehouse
-            SET weight = :new_weight
-            WHERE bag_id = :bag_id AND commodity = :commodity
-        """
-        delete_entry_query = "DELETE FROM warehouse WHERE bag_id = :bag_id"
-
-        print(">>>> Updating the warehouse table")
-        for commodity in data['commodities']:
-            select_weight_query = "SELECT weight, bag_id FROM warehouse WHERE commodity= :commodity"
-            commodity_weight_obj = db.session.execute(select_weight_query,{
-                'commodity': commodity[0]
-            })
-            
-            print("/tObtained the weights and bag_ids based on the commodity")
-            deleted_bags, supposed_bag_id, new_weight = [], None, None
-            for row in commodity_weight_obj:
-                if commodity[3] >= row[0]:
-                    deleted_bags.append(row[1])
-                else:
-                    new_weight = row[0] - commodity[3]
-                    supposed_bag_id = row[1]
-                    break
-            
-            if supposed_bag_id != None and new_weight != None:
-                print("/tObtained the supposed_bag_id and new_weight. This should be updated in the database")
-                with app.app_context():
-                    db.session.execute(
-                        update_weight_query,
-                        {
-                            'new_weight': new_weight,  # New weight value
-                            'bag_id': supposed_bag_id,   # Bag ID to identify the row to update
-                            'commodity': commodity[0]
-                        }
-                    )
-                    db.session.commit()
-
-            if len(deleted_bags) > 0:
-                print("/t There are deleted bag ids. We need to delete those. Since purchase happened.")
-                for delete_bag in deleted_bags:
-                    with app.app_context():
-                        db.session.execute(
-                            delete_entry_query,
-                            {  
-                                'bag_id': delete_bag   # Bag ID to identify the row to update
-                            }
-                        )
-                        db.session.commit()
-    except Exception as error:
-        is_successful = False
-        print(f"Error in updating the warehouse details about the purchase - {error} \n\n{traceback.format_exc()}")
-        return jsonify({'error': f"Error in adding the warehouse details about the purchase - {error}"}), 500
-    else:
-        print(">>>> Successfully updated the warehouse table after the warehouse insertion")
-
-    try:
-        insert_query = """
-            INSERT INTO sell_statistics (farmer_id, bag_id, commodity, price_kg, selling_price)
-            VALUES (:farmer_id, :bag_id, :commodity, :price_kg, :selling_price)
-        """
-
-        for commodity in data['commodities']:
-            with app.app_context():
-                db.session.execute(insert_query,
-                    {
-                        'farmer_id': data['farmer_id'],
-                        'bag_id': data['bag_id'],
-                        'commodity': commodity[0],
-                        'price_kg': commodity[1],
-                        'selling_price': commodity[2]
-                    }
-                )
-        db.session.commit()
-    except Exception as error:
-        is_successful = False
-        print(f"Error in adding the statistics details about the purchase - {error} \n\n{traceback.format_exc()}")
-        return jsonify({'error': f"Error in adding the statistics details about the purchase - {error}"}), 500
-    else:
-        print(">>>> Successfully updated the statistics table after the warehouse insertion")
-
-    
     try:
         with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
-            retrieved_data = redis_connection.hmset(decoded_payload['email'], '') # retrieveing the data for the retailer email
+            retrieved_data = redis_connection.hgetall(decoded_payload['email'])
+            if retrieved_data:
+                if b'items' in retrieved_data:
+                    stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    PURCHASE_ITEMS = copy.deepcopy(stored_list)
+            else:
+                raise Exception('Looks like Cart is empty')
     except Exception as error:
         is_successful = False
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in fetching the cart - {error}"}), 500
+    else:
+        redis_connection.hmset(decoded_payload['email'], {'items': json.dumps([])}) # Store it back to the redis
 
+    
+    try:
+        with redis.Redis(host='localhost', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            retrieved_data = redis_connection.hgetall('bag_ids')
+            if retrieved_data:
+                if b'items' in retrieved_data:
+                    stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    BAG_IDS = copy.deepcopy(stored_list)
+    except:
+        print(f"Error in fetching the bag_ids - {error} \n\n{traceback.format_exc()}")
+        return jsonify({'error': f"Error in fetching the bag_ids- {error}"}), 500
+
+
+    for item in PURCHASE_ITEMS:
+        try:
+            
+            retailer_results = Retailer.query.filter_by(email=decoded_payload['email']).all()
+            # We need to loop as the retailer_results is an object
+            for retailer in retailer_results:
+                purchase = Purchases(purchase_id, "HarvestHub_Owner", retailer.email, retailer.address, retailer.phonenumber, datetime.datetime.utcnow, item['commodity'], item['price'])
+                db.session.add(purchase)
+                db.session.commit()
+        except Exception as error:
+            is_successful = False
+            print(f"Error in adding the purchase details - {error} \n\n{traceback.format_exc()}")
+            return jsonify({'error': f"Error in adding the purchase details - {error}"}), 500
+
+        try:
+            print(">>>> Updating the warehouse table")
+            if len(item['deleted_bags']) > 0:
+                for bagID in list(item['deleted_bags']):
+                    delete_entry_query = "DELETE FROM warehouse WHERE bag_id = :bag_id"
+                    print(f"/tBagID - {bagID} is getting removed from the Warehouse")
+                    with app.app_context():
+                        db.session.execute(
+                            delete_entry_query,
+                            {  
+                                'bag_id': bagID   # Bag ID to identify the row to update
+                            }
+                        )
+                        db.session.commit()
+                    
+                    if BAG_IDS != None:
+                        BAG_IDS.remove(bagID)
+
+            with redis.Redis(host='localhost', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+                redis_connection.hmset(decoded_payload['email'], {'items': json.dumps([BAG_IDS])})
+
+            update_weight_query = "UPDATE warehouse SET weight = :new_weight WHERE bag_id = :bag_id AND commodity = :commodity"
+            if item['bag_id'] != None:
+                print("/tObtained the Bag id which is the latest. This should be updated in the database")
+                with app.app_context():
+                    db.session.execute(
+                        update_weight_query,
+                        {
+                            'new_weight': item['left_over_weight'],  # New weight value
+                            'bag_id': item['bag_id'],   # Bag ID to identify the row to update
+                            'commodity': item['commodity']
+                        }
+                    )
+                    db.session.commit()
+        except Exception as error:
+            is_successful = False
+            print(f"Error in updating the warehouse details about the purchase - {error} \n\n{traceback.format_exc()}")
+            return jsonify({'error': f"Error in adding the warehouse details about the purchase - {error}"}), 500
+        else:
+            print(">>>> Successfully updated the warehouse table after the warehouse insertion")
+
+        try:
+            insert_query = """
+                INSERT INTO sell_statistics (farmer_id, bag_id, commodity, price_kg, selling_price)
+                VALUES (:farmer_id, :bag_id, :commodity, :price_kg, :selling_price)
+            """
+            select_weight_query = "SELECT * FROM warehouse WHERE commodity= :commodity AND bag_id= :bag_id"
+            
+            details = []
+            for bagId in list(item['deleted_bags']):
+                commodity_weight_obj = db.session.execute(select_weight_query,{
+                    'commodity': item['commodity'],
+                    'bag_id': bagId
+                })
+        
+                for row in commodity_weight_obj:
+                    details.append([
+                        row.farmer_id,
+                        row.bag_id,
+                        "HarvestHub_Owner",
+                        row.commodity,
+                        row.price_kg,
+                        (row.weight) * (row.price_kg + (row.price_kg * (row.profit_percent / 100)))
+                    ])
+            else:
+                commodity_weight_obj = db.session.execute(select_weight_query,{
+                    'commodity': item['commodity'],
+                    'bag_id': item['bag_id']
+                })
+        
+                for row in commodity_weight_obj:
+                    details.append([
+                        row.farmer_id,
+                        row.bag_id,
+                        "HarvestHub_Owner",
+                        row.commodity,
+                        row.price_kg,
+                        (item['left_over_weight']) * (row.price_kg + (row.price_kg * (row.profit_percent / 100)))
+                    ])
+
+            for detail in details:
+                with app.app_context():
+                    db.session.execute(insert_query,
+                        {
+                            'farmer_id': detail[0],
+                            'bag_id': detail[1],
+                            'commodity': detail[3],
+                            'price_kg': detail[4],
+                            'selling_price': detail[5]
+                        }
+                    )
+                db.session.commit()
+        except Exception as error:
+            is_successful = False
+            print(f"Error in adding the statistics details about the purchase - {error} \n\n{traceback.format_exc()}")
+            return jsonify({'error': f"Error in adding the statistics details about the purchase - {error}"}), 500
+        else:
+            print(">>>> Successfully updated the statistics table after the warehouse insertion")
 
     if is_successful:
         return jsonify({'message':'Purchase successful'}), 200
     else:
         return jsonify({'message':'Error in purchasing, please contact the administrator'}), 500
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# >>>> Get all the receipts
+# ---------------------------------------------------------------------------------------------------------------------
+@app.route('/retailer/validate', methods=['GET'])
+def validate_user():
+    jwt_token = request.cookies.get('retailer_token')
+    if jwt_token:
+        try:
+            decoded_payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=['HS256'])
+            return jsonify({'message': "Success"}), 200
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expired'}), 401
+            return 
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+    else:
+        return jsonify({'error': 'Not Authorised'}), 401
 
 # ---------------------------------------------------------------------------------------------------------------------
 

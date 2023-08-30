@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { SIGNUPURL } from '../../constants';
+import { SIGNUPURL, VALIDATE_USER } from '../../constants';
 
 
 const Signup = () => {
@@ -24,11 +24,22 @@ const Signup = () => {
         if(localStorage.getItem('isLoggedIn') === "true"){
             navigate("/menu");
         }
+        validAuthentication();
     });
 
 
     const navigateToLogin = () => {
         navigate("/");
+    }
+
+    const validAuthentication = () => {
+        axios.get(`${VALIDATE_USER}`)
+        .then((res) => {
+            navigate("/menu");
+        })
+        .catch((error) => {
+            toast.error("User Autentication Failed");
+        })
     }
 
     const handleSubmit = (e) => {
