@@ -2,6 +2,7 @@
 
 from setup import db
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import ARRAY
 
 class Retailer(db.Model):
     __tablename__ = 'retailer'
@@ -26,7 +27,7 @@ class Purchases(db.Model):
     retailer_address = db.Column(db.String(400), nullable=False)
     retailer_phonenumber = db.Column(db.String(10), nullable=False)
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    commodity = db.Column(db.String(80), nullable=False)
+    commodity = db.Column(db.ARRAY(db.String), nullable=False)
 
     def __repr__(self):
         return f'User - {self.retailer_email}'

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
-import { AgGridReact } from 'ag-grid-react';
 import 'react-toastify/dist/ReactToastify.css';
 import { GET_COMMODITIES, ADD_TO_CART } from '../../constants.js';
 
@@ -12,6 +11,7 @@ import { GET_COMMODITIES, ADD_TO_CART } from '../../constants.js';
 const Menu = () => {
 
     const navigate = useNavigate();
+    const [name, setName] = useState(localStorage.getItem('fullname'));
     const [quantity, setQuantity] = useState();
 
     const navigateToCart = () =>{
@@ -20,6 +20,12 @@ const Menu = () => {
 
     const navigateToOrderHistory = () => {
         navigate("/history");
+    }
+
+    const logout = () =>{
+        localStorage.setItem('isLoggedIn',false);
+        localStorage.removeItem('email');
+        navigate("/")
     }
 
     useEffect( () =>{
@@ -77,6 +83,7 @@ const Menu = () => {
                 cost: price * quantity
             }
         };
+
         axios.put(`${ADD_TO_CART}`, options) // if promise get you success, control enters .then
         .then(res => {
             if (res.status === 200) {
@@ -91,19 +98,24 @@ const Menu = () => {
 
     return(
         <div>
-            <div style={{padding:"20px"}}>
-                <header style={{color:"#2E8DCD", fontSize:"20px"}}><b>HarvestHub</b></header>
-            </div><br/><br/><br/>
+            <div>
+                <div className='navigation_bar'>
+                    <ul>
+                        <li> <span style={{fontSize:"20px",color:"#046FAA", marginRight:"18px"}}><b>HarvestHub</b> <br/> <span style={{fontSize:"12px",padding:"0px",color:"#046FAA"}}>({name})</span></span></li>
+                        <li style={{float:"right", color:"#046FAA"}} onClick={logout}><label>Logout</label></li>
+                    </ul>
+                </div>
+            </div> <br/><br/>
+            
             <div style={{padding:"10px", marginLeft:"25px"}}>
                     <button onClick={navigateToCart} className='btn'><b>Cart</b></button>
                     <button onClick={navigateToOrderHistory} className='btn' style={{marginLeft:"10px"}}><b>Order History</b></button>
             </div> <br/><br/>
 
             <div style={{display:"flex", flexDirection:"row", padding:"20px"}}>
-
                 {
-                    commodtites.map((commodity) => (
-                        <div style={{padding:"20px", borderRadius:"5px", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)", margin:"10px"}}>
+                    commodtites.map((commodity, i) => (
+                        <div key={i} style={{padding:"20px", borderRadius:"5px", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)", margin:"10px"}}>
                             <p><b>Item</b></p>
                             <p>{commodity[0]}</p> <br/>
                             <p><b>Price/kg</b> </p>
@@ -115,6 +127,8 @@ const Menu = () => {
                     ))
                 }
             </div>
+
+            <ToastContainer />
         </div>
     );
 }

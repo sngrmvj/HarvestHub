@@ -137,7 +137,10 @@ def get_all_receipts():
 
         purchases = []
         for item in purchase_list:
-            purchases.append([item.purchase_id, item.owner, item.retailer_email, item.retailer_address, item.created_date])
+            purchases.append({
+                'Date': item.created_date,
+                'Purchase Id':item.purchase_id
+            })
     except Exception as error:
         print(f"Error in retrieveing the all receipts - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in retrieveing the all receipts - {error}"}), 500
@@ -406,6 +409,23 @@ def purchase():
         return jsonify({'error': f"Error in adding the statistics details about the purchase - {error}"}), 500
     else:
         print(">>>> Successfully updated the statistics table after the warehouse insertion")
+
+    
+    try:
+        with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            for commodity in data['commodities']:
+                retrieved_data = redis_connection.hgetall(decoded_payload['email']) # retrieveing the data for the retailer email
+                if retrieved_data:
+                    retrieved_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in retrieved_data.items()} # Converting the binary ascii
+                    del retrieved_dict[commodity[0]] # Deleting
+                    print(f"Successfully deleted the commodity from the cart - {commodity[0]}")
+                else:
+                    return jsonify({'message': "Cart data not available"}), 404
+    except Exception as error:
+        is_successful = False
+        print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
+        return jsonify({'error': f"Error in fetching the cart - {error}"}), 500
+
 
     if is_successful:
         return jsonify({'message':'Purchase successful'}), 200

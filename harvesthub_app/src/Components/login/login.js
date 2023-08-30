@@ -54,6 +54,7 @@ const Login = () => {
             if (res.status === 200) {
                 localStorage.setItem('isLoggedIn',true);
                 localStorage.setItem('fullname', res.data.fullname);
+                localStorage.setItem('email', res.data.email)
                 navigate("/menu");
             }
         })

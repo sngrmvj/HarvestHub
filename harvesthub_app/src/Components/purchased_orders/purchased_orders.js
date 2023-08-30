@@ -10,11 +10,24 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ALL_ORDERS } from '../../constants';
 
 const PurchaseHistory = () => {
-    const [rowData, setRowData] = useState([]);
+    const [rowData, setRowData] = useState([
+        {'Date': "Null", 'Item': 'Tomato', 'Quantity': '20', 'Price': '40'} 
+    ]);
+    const [name, setName] = useState(localStorage.getItem('fullname'));
     const navigate = useNavigate();
 
     const navigateToMenu = () => {
         navigate('/menu');
+    }
+
+    const navigateToReceipt = (data) => {
+        navigate("/receipt",{ state: { data: data } })
+    }
+
+    const logout = () =>{
+        localStorage.setItem('isLoggedIn',false);
+        localStorage.removeItem('email');
+        navigate("/")
     }
 
     useEffect(() => {
@@ -32,24 +45,32 @@ const PurchaseHistory = () => {
 
         axios.get(ALL_ORDERS, options)
             .then(response => {
+                console.log(response);
                 setRowData(response.data);
             })
             .catch(error => console.error('Error fetching data:', error));
     }, []);
 
     const columnDefs = [
-        { headerName: 'Date', field: 'date', sortable: true, filter: true },
-        { headerName: 'Item', field: 'item', sortable: true, filter: true },
-        { headerName: 'Quantity', field: 'quantity', sortable: true, filter: true },
-        { headerName: 'Price', field: 'price', sortable: true, filter: true },
-        { headerName: 'View', field: 'view'},
+        { headerName: 'Date', field: 'date', sortable: true, filter: true, width: 350,  },
+        { headerName: 'Purchase Id', field: 'purchase_id', sortable: true, filter: true, width: 400 },
+        { headerName: 'View', field: 'view', 
+            cellRenderer: (params) =>{
+                return <a onClick={() => navigateToReceipt(params.data)} style={{color:'#046FAA',cursor:'pointer', textAlign:'center'}}>View</a>
+            }
+        },
     ];
 
     return (
         <div>
-            <div style={{padding:"20px"}}>
-                <header style={{color:"#2E8DCD", fontSize:"20px"}}><b>HarvestHub</b></header>
-            </div><br/><br/>
+            <div>
+                <div className='navigation_bar'>
+                    <ul>
+                        <li> <span style={{fontSize:"20px",color:"#046FAA", marginRight:"18px"}}><b>HarvestHub</b> <br/> <span style={{fontSize:"12px",padding:"0px",color:"#046FAA"}}>({name})</span></span></li>
+                        <li style={{float:"right", color:"#046FAA"}} onClick={logout}><label>Logout</label></li>
+                    </ul>
+                </div>
+            </div> <br/><br/>
             <div style={{padding:"10px", marginLeft:"25px"}}>
                     <button onClick={navigateToMenu} className='btn'><b>Menu</b></button>
             </div> <br/>

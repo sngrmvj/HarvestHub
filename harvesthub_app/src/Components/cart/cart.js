@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DELETE_ITEM_IN_CART } from '../../constants';
+import { DELETE_ITEM_IN_CART, GET_CART, PURCHASE_ORDER } from '../../constants';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './cart.css';
@@ -10,12 +10,14 @@ const Cart = () => {
     const [groceries, setGroceries] = useState([]);
     const [totalWeight, setTotalWeight] = useState(0);
     const [totalPrice, setTotalPrice] = useState(0);
+    const [name, setName] = useState(localStorage.getItem('fullname'));
     const navigate = useNavigate();
+
 
     useEffect(() => {
         // Fetch grocery details from the backend API
         // Replace 'your_backend_endpoint' with the actual API endpoint
-        fetch('your_backend_endpoint')
+        fetch(`${GET_CART}`)
             .then(response => response.json())
             .then(data => {
                 // Assuming data is a dictionary with grocery details
@@ -24,6 +26,12 @@ const Cart = () => {
             })
             .catch(error => console.error('Error fetching data:', error));
     }, []);
+
+    const logout = () =>{
+        localStorage.setItem('isLoggedIn',false);
+        localStorage.removeItem('email');
+        navigate("/")
+    }
 
 
     const navigateToMenu = () =>{
@@ -58,6 +66,36 @@ const Cart = () => {
         setGroceries(updatedCart);
     };
 
+
+    const purchase_order = () => {
+        const options = {
+            withCredentials: true,
+            credentials: 'same-origin',
+
+            headers: {
+                'Accept': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+                'Content-Type': 'application/json',
+            },
+
+            data : {
+                commodities: groceries,
+            }
+        };
+        axios.put(`${PURCHASE_ORDER}`, options)
+        .then(res => {
+            if (res.status === 200) {
+                toast.success(`Successfully purchased the order`)
+                navigate("/menu");
+            }
+        })
+        .catch(error => {
+            toast.error(`Error in purchasing the order ${error}`)
+        })
+    }
+
+
     const calculateTotals = (groceries) => {
         let totalWeight = 0;
         let totalPrice = 0;
@@ -74,9 +112,14 @@ const Cart = () => {
     return (
         
         <div>
-            <div style={{padding:"20px"}}>
-                <header style={{color:"#2E8DCD", fontSize:"20px"}}><b>HarvestHub</b></header>
-            </div><br/><br/>
+            <div>
+                <div className='navigation_bar'>
+                    <ul>
+                        <li> <span style={{fontSize:"20px",color:"#046FAA", marginRight:"18px"}}><b>HarvestHub</b> <br/> <span style={{fontSize:"12px",padding:"0px",color:"#046FAA"}}>({name})</span></span></li>
+                        <li style={{float:"right", color:"#046FAA"}} onClick={logout}><label>Logout</label></li>
+                    </ul>
+                </div>
+            </div> <br/><br/>
 
             <div style={{padding:"10px", marginLeft:"25px"}}>
                     <button onClick={navigateToMenu} className='btn'><b>Menu</b></button>
@@ -106,9 +149,11 @@ const Cart = () => {
                     <p className="cart-total-value">{totalPrice} Rs</p>
                 </div> <br/>
                 <div>
-                    <button className='btn'><b>Purchase</b></button>
+                    <button className='btn' onClick={purchase_order}><b>Purchase</b></button>
                 </div>
             </div>
+
+            <ToastContainer />
         </div>
     );
 }
