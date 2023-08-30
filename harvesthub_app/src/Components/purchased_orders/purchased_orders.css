@@ -1,6 +1,6 @@
 /* PurchaseHistory.css */
 .purchase-history-container {
-    max-width: 800px;
+    width: 55%;
     margin: 0 auto;
     padding: 20px;
     border: 1px solid #ccc;
@@ -10,7 +10,7 @@
 }
 
 .ag-grid-container {
-    height: 400px;
+    height: 600px;
     width: 100%;
     margin-top: 20px;
 }
