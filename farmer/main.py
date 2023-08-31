@@ -5,6 +5,8 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 cors = CORS(app, supports_credentials=True)
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:root@localhost:5432/harvesthub'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 

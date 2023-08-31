@@ -21,72 +21,74 @@ services:
     volumes:
       - redisvol:/bitnami/redis/data
     restart: always
-  # owner_portal:
-  #   image: owner-portal:latest  # Update the repository name and tag
-  #   build:
-  #     context: ./owner  # Path to your agent portal application
-  #     dockerfile: Dockerfile           # Path to your Dockerfile
-  #   ports:
-  #     - 5003:5003
-  #   environment:
-  #     REDIS_PASSWORD: default
-  #     POSTGRES_PASSWORD: root
-  #   depends_on:
-  #     - postgres
-  #     - redis
-  #   restart: always
-  # agent_portal:
-  #   image: agent-portal:latest  # Update the repository name and tag
-  #   build:
-  #     context: ./agent  # Path to your agent portal application
-  #     dockerfile: Dockerfile           # Path to your Dockerfile
-  #   ports:
-  #     - 5001:5001
-  #   environment:
-  #     REDIS_PASSWORD: default
-  #     POSTGRES_PASSWORD: root
-  #   depends_on:
-  #     - postgres
-  #     - owner_portal
-  #   restart: always
-  # farmer_portal:
-  #   image: farmer-portal:latest  # Update the repository name and tag
-  #   build:
-  #     context: ./farmer  # Path to your agent portal application
-  #     dockerfile: Dockerfile           # Path to your Dockerfile
-  #   ports:
-  #     - 5002:5002
-  #   depends_on:
-  #     - postgres
-  #     - owner_portal
-  #   restart: always
-  # retailer_service:
-  #   image: retailer-service:latest  # Update the repository name and tag
-  #   build:
-  #     context: ./retailer  # Path to your agent portal application
-  #     dockerfile: Dockerfile           # Path to your Dockerfile
-  #   ports:
-  #     - 5000:5000
-  #   environment:
-  #     SECRET_KEY: x
-  #     REDIS_PASSWORD: default
-  #     POSTGRES_PASSWORD: root
-  #   depends_on:
-  #     - postgres
-  #     - redis
-  #   restart: always
-  # harvest-hub:
-  #   image: harvesthub:latest  # Update the repository name and tag
-  #   build:
-  #     context: ./harvesthub_app  # Path to your agent portal application
-  #     dockerfile: Dockerfile           # Path to your Dockerfile
-  #   ports:
-  #     - 3000:3000
-  #   depends_on:
-  #     - retailer_service
-  #     - postgres
-  #     - owner_portal
-  #   restart: always
+  owner_portal:
+    image: owner-portal:latest  # Update the repository name and tag
+    build:
+      context: ./owner  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 5003:5003
+    environment:
+      REDIS_PASSWORD: default
+      POSTGRES_PASSWORD: root
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+  agent_portal:
+    image: agent-portal:latest  # Update the repository name and tag
+    build:
+      context: ./agent  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 5001:5001
+    environment:
+      REDIS_PASSWORD: default
+      POSTGRES_PASSWORD: root
+    depends_on:
+      - postgres
+      - redis
+      - owner_portal
+    restart: always
+  farmer_portal:
+    image: farmer-portal:latest  # Update the repository name and tag
+    build:
+      context: ./farmer  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 5002:5002
+    depends_on:
+      - postgres
+      - redis
+      - owner_portal
+      - agent_portal
+    restart: always
+  retailer_service:
+    image: retailer-service:latest  # Update the repository name and tag
+    build:
+      context: ./retailer  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 5004:5004
+    environment:
+      SECRET_KEY: u8Ew9T0iRmDpA4cBzXqVfNnCvYsUkLwI
+      REDIS_PASSWORD: default
+      POSTGRES_PASSWORD: root
+    depends_on:
+      - postgres
+      - redis
+      - owner_portal
+    restart: always
+  harvest-hub:
+    image: harvesthub:latest  # Update the repository name and tag
+    build:
+      context: ./harvesthub_app  # Path to your agent portal application
+      dockerfile: Dockerfile           # Path to your Dockerfile
+    ports:
+      - 3000:3000
+    depends_on:
+      - retailer_service
+    restart: always
 
 volumes:
   postgres-db-volume:

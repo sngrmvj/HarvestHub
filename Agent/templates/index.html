@@ -171,6 +171,15 @@
             <label style="font-size: 12px;">(Agent Portal)</label>
         </div><br/>
 
+        <div style="padding: 1opx;margin-left: 20px;">
+            <button class="btn" id="send_truck">Send truck</button> 
+            <script>
+                document.getElementById("send_truck").addEventListener("click", function() {
+                    window.location.href = "{{ url_for('send_truck_to_owner') }}";
+                });
+            </script>
+        </div> <br/><br/>
+
         <div class="main">
             <div class="main_div">
                 <header class="header">Provide Bag Details</header> <br/><br/>

@@ -5,6 +5,8 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 cors = CORS(app, supports_credentials=True)
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:root@localhost:5432/harvesthub'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 TRUCK_WEIGHT = 50000
 
@@ -146,9 +148,37 @@ def insert_commodity_bag():
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------------------------------------------------------------
+# >>>> Send Truck API
+# ---------------------------------------------------------------------------------------------------------------------------------
+@app.route('/agent/truck', methods=['POST'])
+def send_truck_to_owner():
+
+    isTruckSent, agent_id = False, None
+
+    try:
+        id_query = "SELECT agent_id FROM agent WHERE email= :email"
+        result = db.session.execute(id_query, {"email": request.form.get('agent_email')})
+        row = result.fetchone()
+        if row:
+            agent_id = row[0]
+    except Exception as error:
+        print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
+
+    if agent_id:
+        value = send_truck(agent_id)
+        if not value:
+            return redirect(url_for('agent_page', message="Error in sending the truck"))
+        else:
+            isTruckSent = True
+    else:
+        return redirect(url_for('agent_page', message="Error in fetching the id of the agent"))
+    
+    if isTruckSent:
+        return redirect(url_for('agent_page', message="Truck sent successfully"))
 
 
-
+# ---------------------------------------------------------------------------------------------------------------------------------
 
 def send_truck(agent_id):
 
