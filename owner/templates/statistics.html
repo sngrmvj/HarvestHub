@@ -195,12 +195,12 @@
                         var rowData = JSON.parse('{{ row_data | tojson | safe }}');
                         var gridOptions = {
                             columnDefs: [
-                                { field: "Bag ID", pinned: true, wrapText: true, autoHeight: true, resizable: true, flex:1},
+                                { field: "Bag ID", pinned: true, wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true },
                                 { field: "Farmer ID", pinned: true},
-                                { field: "Commodity", },
+                                { field: "Commodity", sortable:true },
                                 { field: "Price kg", },
                                 { field: "Selling Price", },
-                                { field: "Date of sell", wrapText: true, autoHeight: true, resizable: true, flex:1 }
+                                { field: "Date of sell", wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true }
                             ],
                             rowData: rowData,
                             defaultColDef: {

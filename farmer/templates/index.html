@@ -198,13 +198,13 @@
                             columnDefs: [
                                 { field: "Agent ID", pinned: true},
                                 { field: "Farmer ID", pinned: true},
-                                { field: "Truck ID", wrapText: true, autoHeight: true, resizable: true, flex:1},
-                                { field: "Bag ID",wrapText: true, autoHeight: true, resizable: true, flex:1},
+                                { field: "Truck ID", wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true },
+                                { field: "Bag ID",wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true },
                                 { field: "Owner", },
-                                { field: "Commodity", },
+                                { field: "Commodity", sortable:true },
                                 { field: "Selling Price", },
-                                { field: "Bag Weight", },
-                                { field: "Date of sell", wrapText: true, autoHeight: true, resizable: true, flex:1},
+                                { field: "Bag Weight", sortable:true },
+                                { field: "Date of sell", wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true },
                                 // { field: "View Receipt", cellRenderer: params => {
                                 //         return `<a style="color:#046FAA;cursor:pointer, textAlign:center">View</a>`;
                                 //     }
