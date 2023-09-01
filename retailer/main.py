@@ -170,7 +170,7 @@ def get_cart():
 
     email = request.args['email']
     try:
-        with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             retrieved_data = redis_connection.hgetall(email)
             if retrieved_data:
                 # Deserialize the 'items' field value back into a list
@@ -195,7 +195,7 @@ def add_to_cart():
     email = request.args['email']
     BAG_IDS = []
     try:
-        with redis.Redis(host='localhost', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             # redis_connection.hdel('bag_ids', 'items')
             retrieved_data = redis_connection.hgetall('bag_ids')
             if retrieved_data:
@@ -256,7 +256,7 @@ def add_to_cart():
         redis_insert['farmer_id'] = list(redis_insert['farmer_id'])
         redis_insert['deleted_bags']= list(redis_insert['deleted_bags'])
 
-        with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             # redis_connection.hdel(email, 'items')
             retrieved_data = redis_connection.hgetall(email)
             if retrieved_data:
@@ -273,7 +273,7 @@ def add_to_cart():
         return jsonify({'error': f"Error in fetching the cart - {error}"}), 500
     
     try:
-        with redis.Redis(host='localhost', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             redis_connection.hset('bag_ids', 'items', json.dumps(BAG_IDS))
     except Exception as error:
         print(f"Error in setting the bag_ids - {error} \n\n{traceback.format_exc()}")
@@ -295,7 +295,7 @@ def delete_from_cart():
 
     try:
         commodity = request.args.get('commodity')
-        with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             # redis_connection.hdel(email, 'items')
             retrieved_data = redis_connection.hgetall(email) # retrieveing the data for the retailer email
             if retrieved_data:
@@ -335,7 +335,7 @@ def purchase():
     PURCHASE_ITEMS, BAG_IDS = None, None
 
     try:
-        with redis.Redis(host='localhost', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             retrieved_data = redis_connection.hgetall(email)
             if retrieved_data:
                 if b'items' in retrieved_data:
@@ -352,7 +352,7 @@ def purchase():
 
     
     try:
-        with redis.Redis(host='localhost', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             retrieved_data = redis_connection.hgetall('bag_ids')
             if retrieved_data:
                 if b'items' in retrieved_data:
@@ -469,7 +469,7 @@ def purchase():
                     if BAG_IDS != None:
                         BAG_IDS.remove(bagID)
 
-            with redis.Redis(host='localhost', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            with redis.Redis(host='redis', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
                 redis_connection.hmset('bag_ids', {'items': json.dumps(BAG_IDS)})
 
             for bags in item['bag_id']:

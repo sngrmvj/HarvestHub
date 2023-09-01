@@ -6,7 +6,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 cors = CORS(app, supports_credentials=True)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:root@localhost:5432/harvesthub'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:root@postgres:5432/harvesthub'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 TRUCK_WEIGHT = 50000
@@ -123,7 +123,7 @@ def insert_commodity_bag():
         TRUCK_WEIGHT = TRUCK_WEIGHT - data['weight']
 
     try:
-        with redis.Redis(host='localhost', port=6379, db=1, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=1, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             # redis_connection.hdel(data['agent_id'], 'items')
             retrieved_data = redis_connection.hgetall(data['agent_id'])
             if retrieved_data:
@@ -210,7 +210,7 @@ def send_truck(agent_id):
     info_to_owner = None
 
     try:
-        with redis.Redis(host='localhost', port=6379, db=1, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+        with redis.Redis(host='redis', port=6379, db=1, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             retrieved_data = redis_connection.hgetall(agent_id)
             if retrieved_data:
                 if b'items' in retrieved_data and len(retrieved_data[b'items']) > 0:
@@ -247,7 +247,7 @@ def send_truck(agent_id):
     else:
         if info_to_owner:
             try:
-                with redis.Redis(host='localhost', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+                with redis.Redis(host='redis', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
                     if len(stored_list) > 0:
                         for item in stored_list: 
                             temp = {

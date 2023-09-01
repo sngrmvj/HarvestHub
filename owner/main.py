@@ -117,7 +117,7 @@ def fetch_new_commodities():
 
     temp = []
     try:
-        with redis.Redis(host='localhost', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection: 
+        with redis.Redis(host='redis', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection: 
             retrieved_data = redis_connection.hgetall("new_commoditites")
             if retrieved_data:
                 for item in retrieved_data:
@@ -142,7 +142,7 @@ def add_commodity():
 
     try:
         # First we are removing the element from the redis
-        with redis.Redis(host='localhost', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection: 
+        with redis.Redis(host='redis', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection: 
             bagId = request.form.get('bag_id').encode('ascii')
             retrieved_data = redis_connection.hget("new_commoditites", bagId)
             if retrieved_data:
