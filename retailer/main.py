@@ -174,7 +174,7 @@ def get_cart():
             retrieved_data = redis_connection.hgetall(email)
             if retrieved_data:
                 # Deserialize the 'items' field value back into a list
-                if b'items' in retrieved_data:
+                if b'items' in retrieved_data and len(retrieved_data[b'items']) > 0:
                     stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
                     return jsonify({'data': stored_list}), 200
             else:
@@ -218,15 +218,20 @@ def add_to_cart():
         }
         for row in rows_with_commodity:
             selling_price = row.price_kg + (row.price_kg * (row.profit_percent / 100))
+            
+            
 
             # if row.bag_id not in BAG_IDS:
             # The idea is to avoid the usage of same bag_id across multiple people until purchase
             # We are not updating it in database as it should be updated only once the purchase happens.
             data['data']['quantity'] = int(data['data']['quantity'])
+
+            if data['data']['quantity'] <= 0:
+                break
             if row.weight > data['data']['quantity']:
                 redis_insert['farmer_id'].add(row.farmer_id)
                 redis_insert['bag_id'].append(row.bag_id)
-                redis_insert['weight'] += data['data']['quantity']
+                redis_insert['weight'] += int(data['data']['quantity'])
                 redis_insert['price'] += redis_insert['weight'] * selling_price
                 redis_insert['left_over_weight'] = row.weight - data['data']['quantity']
             elif row.weight < data['data']['quantity']:
@@ -324,8 +329,6 @@ def delete_from_cart():
 def purchase():
 
     email = request.args['email']
-
-
     purchase_id = str(uuid.uuid4())
     is_successful = True
 
@@ -365,6 +368,7 @@ def purchase():
         try:
             retailer_results = Retailer.query.filter_by(email=email).all()
             # We need to loop as the retailer_results is an object
+            print(retailer_results)
             for retailer in retailer_results:
                 purchase = Purchases(
                     purchase_id=purchase_id, 

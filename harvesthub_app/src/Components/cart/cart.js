@@ -17,7 +17,6 @@ const Cart = () => {
     useEffect(() => {
         // Fetch grocery details from the backend API
         // Replace 'your_backend_endpoint' with the actual API endpoint
-        // validAuthentication();
         let email = localStorage.getItem('email')
         fetch(`${GET_CART}?email=${email}`)
             .then(response => response.json())
@@ -39,17 +38,6 @@ const Cart = () => {
 
     const navigateToMenu = () =>{
         navigate('/menu');
-    }
-
-    const validAuthentication = () => {
-        axios.get(`${VALIDATE_USER}`)
-        .then((res) => {
-            console.log("Carry On!!");
-        })
-        .catch((error) => {
-            toast.error("User Autentication Failed");
-            logout();
-        })
     }
 
     // Remove item from the cart
@@ -143,25 +131,6 @@ const Cart = () => {
 
             <div className='cart-container'>
                 <header className="cart-header"><b>Cart</b></header>
-                {/* <ul>
-                    {groceries.map((item, i) => (
-                        <span key={i} style={{padding:"10px"}}>
-                            <div>
-                                <span style={{float:"left"}}>
-                                    <label><b>commodity</b></label><br/>
-                                    <label>{item['commodity']}</label> <br/><br/>
-                                    <label><b>Weight</b></label><br/>
-                                    <label>{item['weight']}</label><br/><br/>
-                                </span>
-                                <span style={{float:"right", marginTop:"30px"}}>
-                                    <button style={{border:"none",backgroundColor:"transparent", color:"#2E8DCD", cursor:"pointer"}} onClick={() => removeFromCart(item['commodity'])}><b>Remove</b></button>
-                                </span>
-                            </div>
-
-                        </span>
-                    ))}
-                </ul> */}
-
                 <div style={{ listStyle: "none", padding: 0 }}>
                     {groceries.map((item, i) => (
                         <div key={i} className='li' style={{ padding: "10px", display: "flex", flexDirection:"row", justifyContent: "space-between",  borderBottom: "1px solid #ccc" }}>
@@ -170,6 +139,8 @@ const Cart = () => {
                                 <p>{item['commodity']}</p><br />
                                 <p><b>Weight</b></p>
                                 <p>{item['weight']}</p><br />
+                                <p><b>Price</b></p>
+                                <p>INR {item['price']}</p><br />
                             </div>
                             <div>
                                 <button style={{ border: "none", backgroundColor: "transparent", color: "#2E8DCD", cursor: "pointer", marginTop:"20px" }} onClick={() => removeFromCart(item['commodity'])}><b>Remove</b></button>
@@ -183,7 +154,7 @@ const Cart = () => {
                 </div>
                 <div className="cart-totals_below">
                     <p className="cart-total-label">Total Price:</p>
-                    <p className="cart-total-value">{totalPrice} Rs</p>
+                    <p className="cart-total-value">INR {totalPrice}</p>
                 </div> <br/>
                 <div>
                     <button className='btn' onClick={purchase_order}><b>Purchase</b></button>

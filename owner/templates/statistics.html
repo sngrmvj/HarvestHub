@@ -38,7 +38,7 @@
                 justify-content:center;
                 align-items:center;
                 width: fit-content;
-                margin-top: 100px;
+                margin-top: 20px;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
             }
             input[type="number"]{
@@ -160,7 +160,7 @@
                 }
             }
         </style>
-        <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
         <link rel="stylesheet"  href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"/>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"/>
     </head>
@@ -187,19 +187,20 @@
 
         <div class="main">
             <div class="main_div">
-                <div id="myGrid" style="height: 900px;width:100%" class="ag-theme-alpine"></div>
+                <p style="font-size: 12px;">(You can scroll horizontally and vertically in the table)</p>
+                <div id="myGrid" style="height: 500px;width:1200px" class="ag-theme-alpine"></div>
 
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
-                        var rowData = '{{ row_data | tojson | safe }}';
+                        var rowData = JSON.parse('{{ row_data | tojson | safe }}');
                         var gridOptions = {
                             columnDefs: [
-                                { headerName: "Bag ID", pinned: true},
-                                { headerName: "Farmer ID", pinned: true},
-                                { headerName: "Commodity", },
-                                { headerName: "Price kg", },
-                                { headerName: "Selling Price", },
-                                { headerName: "Date of sell", }
+                                { field: "Bag ID", pinned: true, wrapText: true, autoHeight: true, resizable: true, flex:1},
+                                { field: "Farmer ID", pinned: true},
+                                { field: "Commodity", },
+                                { field: "Price kg", },
+                                { field: "Selling Price", },
+                                { field: "Date of sell", wrapText: true, autoHeight: true, resizable: true, flex:1 }
                             ],
                             rowData: rowData,
                             defaultColDef: {
