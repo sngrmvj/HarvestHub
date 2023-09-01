@@ -15,6 +15,7 @@ const Receipt = () => {
     const [purchaseID, setPurchaseID] = useState();
     const [name, setName] = useState(localStorage.getItem('fullname'));
     const {state} = useLocation();
+    const [isHidden, setIsHidden] = useState(false);
 
     const navigateToMenu = () => {
         navigate('/menu');
@@ -31,20 +32,7 @@ const Receipt = () => {
         navigate("/")
     }
 
-    const validAuthentication = () => {
-        axios.get(`${VALIDATE_USER}`)
-        .then((res) => {
-            console.log("Carry On!!");
-        })
-        .catch((error) => {
-            toast.error("User Autentication Failed");
-            logout();
-        })
-    }
-
     useEffect(() => {
-
-        validAuthentication();
 
         let loginCheck = localStorage.getItem('isLoggedIn');
         if(loginCheck === 'false'){
@@ -52,22 +40,66 @@ const Receipt = () => {
         }
 
         if (state != null){
-            const { id } = state;
-            setPurchaseID(id)
-            get_receipt()
+            const { data, commodity } = state;
+            setTimeout(() => {
+                if(window.location.pathname === "/receipt"){
+                    setPurchaseID(data)
+                    get_receipt(data, commodity)
+                }
+            }, "15000");
         }
         else{
             navigate("/history")
         }
         
-    }, [data]);
+    }, [state]);
 
-    const get_receipt = () => {
-        axios.get(`${GET_RECEIPT}?id=${purchaseID}`)
-        .then(response => {
-            setData(response.data);
-        })
-        .catch(error => console.error('Error fetching data:', error));
+    const get_receipt = async(id, commodity) => {
+        const options = {
+            withCredentials: true,
+            credentials: 'same-origin', 
+            
+            headers: {
+                'Accept': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+                'Content-Type': 'application/json',
+            }, 
+
+        };
+
+        let response = await fetch(`${GET_RECEIPT}?id=${id}&commodity=${commodity}`, options);
+        let result = await response.json();
+        if ('error' in result){
+            toast.error(result.error)
+        } else{
+            setData(<div className='container'>
+                    <div>
+                        <div>
+                            <p><b>Purchase ID</b></p>
+                            <p>{result.data[0]['purchase_id']}</p>
+                        </div> <br/>
+                        <div>
+                            <p><b>Email</b></p> 
+                            <p>{result.data[0]['email']}</p>
+                        </div> <br/>
+                        <div>
+                            <p><b>Address</b></p>
+                            <p>{result.data[0]['address']}</p>
+                        </div> <br/>
+                        <div>
+                            <p><b>Date</b></p>
+                            <p>{result.data[0]['date']}</p>
+                        </div> <br/>
+                        <div>
+                            <p><b>Commodity</b></p> 
+                            <p>{result.data[0]['commodities']}</p>
+                        </div> <br/>
+                    </div>
+                </div>
+            );
+            document.getElementById('loader').style.display='none';
+        }
     }
 
     return(
@@ -80,41 +112,17 @@ const Receipt = () => {
                     </ul>
                 </div>
             </div> <br/><br/>
-            <div style={{padding:"10px", marginLeft:"25px"}}>
+            <div>
+                <div style={{padding:"10px", marginLeft:"25px", float:"left"}}>
                     <button onClick={navigateToMenu} className='btn'><b>Menu</b></button>
                     <button onClick={navigateToOrderHistory} className='btn' style={{marginLeft:'10px'}}><b>Order History</b></button>
-            </div> <br/>
-            <div className='container'>
-                {/* <div>
-                    <div>
-                        <p>Purchase ID</p>
-                        <p>{purchaseID}</p>
-                    </div> <br/>
-                    <div>
-                        <p>Email</p>
-                        <p>{data['email']}</p>
-                    </div> <br/>
-                    <div>
-                        <p>Address</p>
-                        <p>{data['address']}</p>
-                    </div> <br/>
-                    <div>
-                        <p>Date</p>
-                        <p>{data['date']}</p>
-                    </div> <br/>
-                    <div>
-                        {
-                            data['commodities'].map((commodity,i) => (
-                                <div key={i} style={{padding:"20px", borderBottom:"1px solid black", margin:"10px"}}>
-                                    <label style={{marginRight:"10px"}}>{commodity[0]}</label>
-                                    <label style={{marginRight:"10px"}}>{commodity[1]}</label>
-                                    <label style={{marginRight:"10px"}}>{commodity[2]}</label>
-                                </div>
-                            ))
-                        }
-                    </div> <br/>
-                </div> */}
-            </div>
+                </div> 
+                <div style={{marginLeft:"300px", padding:"10px"}}>
+                    <div id="loader" className="loader"></div>
+                </div>
+            </div><br/><br/>
+
+            <div>{data}</div> 
         </div>
     );
 };

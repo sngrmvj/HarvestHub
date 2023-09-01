@@ -20,8 +20,8 @@ const PurchaseHistory = () => {
         navigate('/menu');
     }
 
-    const navigateToReceipt = (data) => {
-        navigate("/receipt",{ state: { data: data } })
+    const navigateToReceipt = async (data) => {
+        navigate("/receipt",{ state: { data: data['Purchase Id'], commodity: data['commodity'] } })
     }
 
     const logout = () =>{
@@ -31,20 +31,18 @@ const PurchaseHistory = () => {
         navigate("/")
     }
 
-    const validAuthentication = () => {
-        axios.get(`${VALIDATE_USER}`)
-        .then((res) => {
-            console.log("Carry On!!");
-        })
-        .catch((error) => {
-            toast.error("User Autentication Failed");
-            logout();
-        })
-    }
+    // const validAuthentication = () => {
+    //     axios.get(`${VALIDATE_USER}`)
+    //     .then((res) => {
+    //         console.log("Carry On!!");
+    //     })
+    //     .catch((error) => {
+    //         toast.error("User Autentication Failed");
+    //         logout();
+    //     })
+    // }
 
     useEffect(() => {
-
-        validAuthentication();
 
         const options = {
             withCredentials: true,
@@ -57,18 +55,19 @@ const PurchaseHistory = () => {
                 'Content-Type': 'application/json',
             },
         };
-
-        axios.get(ALL_ORDERS, options)
+        
+        let email = localStorage.getItem('email')
+        axios.get(`${ALL_ORDERS}?email=${email}`, options)
             .then(response => {
-                console.log(response);
-                setRowData(response.data);
+                setRowData(response.data.data);
             })
             .catch(error => console.error('Error fetching data:', error));
     }, []);
 
     const columnDefs = [
-        { headerName: 'Date', field: 'date', sortable: true, filter: true, width: 350,  },
-        { headerName: 'Purchase Id', field: 'purchase_id', sortable: true, filter: true, width: 400 },
+        { headerName: 'Date', field: 'Date', sortable: true, filter: true, width: 350,  },
+        { headerName: 'Purchase Id', field: 'Purchase Id', sortable: true, filter: true, width: 400 },
+        { headerName: 'Commodity', field: 'commodity', sortable: true, filter: true, width: 200 },
         { headerName: 'View', field: 'view', 
             cellRenderer: (params) =>{
                 return <a onClick={() => navigateToReceipt(params.data)} style={{color:'#046FAA',cursor:'pointer', textAlign:'center'}}>View</a>

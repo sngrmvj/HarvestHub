@@ -22,18 +22,18 @@ const Login = () => {
         if(localStorage.getItem('isLoggedIn') === "true"){
             navigate("/menu")
         }
-        validAuthentication();
+        // validAuthentication();
     },[]);
 
-    const validAuthentication = () => {
-        axios.get(`${VALIDATE_USER}`)
-        .then((res) => {
-            navigate("/menu");
-        })
-        .catch((error) => {
-            toast.error("User Autentication Failed");
-        })
-    }
+    // const validAuthentication = () => {
+    //     axios.get(`${VALIDATE_USER}`)
+    //     .then((res) => {
+    //         navigate("/menu");
+    //     })
+    //     .catch((error) => {
+    //         toast.error("User Autentication Failed");
+    //     })
+    // }
 
     const navigateToSignUp = () => {
         navigate("/register");

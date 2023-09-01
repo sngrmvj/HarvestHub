@@ -74,7 +74,7 @@ class WareHouse(db.Model):
 
 class SellStatistics(db.Model):
     __tablename__ = 'sell_statistics'
-    farmer_id = db.Column(db.String(10), unique=True, nullable=False)
+    farmer_id = db.Column(db.String(10), nullable=False)
     bag_id = db.Column(db.String(80), unique=True, nullable=False)
     owner = db.Column(db.String(80), default="HarvestHub_Owner")
     commodity = db.Column(db.String(80), nullable=False)

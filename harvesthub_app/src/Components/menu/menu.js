@@ -36,9 +36,9 @@ const Menu = () => {
         if(loginCheck === 'false'){
             navigate("/");
         }
-        validAuthentication();
+        // validAuthentication();
         fetch_the_commodities();
-    })
+    },[true]);
 
 
     const validAuthentication = () => {
@@ -57,17 +57,17 @@ const Menu = () => {
         axios.get(`${GET_COMMODITIES}`) // if promise get you success, control enters .then
         .then(res => {
             if (res.status === 200) {
-                console.log(res);
-                setTheCommodtities(res.data)
+                setTheCommodtities(res.data.data)
             }
         })
         .catch(error => {
+            console.log(error);
             toast.error("Error in fetching the items")
         })
     }
 
 
-    const add_to_cart = (item,) =>{
+    const add_to_cart = (item,index) =>{
         const options = {
             withCredentials: true,
             credentials: 'same-origin',
@@ -85,15 +85,17 @@ const Menu = () => {
             }
         };
 
-        axios.put(`${ADD_TO_CART}`, options) // if promise get you success, control enters .then
+        let email = localStorage.getItem('email');
+        axios.put(`${ADD_TO_CART}?email=${email}`, options) // if promise get you success, control enters .then
         .then(res => {
             if (res.status === 200) {
                 toast.success("Added to the cart")
                 setQuantity('');
+                document.getElementById(index).value = ""
             }
         })
         .catch(error => {
-            toast.error(`Error in adding the item to the cart - ${error}`)
+            toast.error(`Error in adding the item to the cart - ${error.response.data.message}`)
         })
     }
 
@@ -118,11 +120,11 @@ const Menu = () => {
                 {
                     commodtites.map((commodity, i) => (
                         <div key={i} style={{padding:"20px", borderRadius:"5px", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)", margin:"10px"}}>
-                            <p><b>Item</b></p>
-                            <p>{commodity[0]}</p> <br/>
-                            <p><b>Enter the weight</b> (kg)</p>
-                            <input type='number' onChange={(e) => setQuantity(e.target.value)}/> <br/><br/>
-                            <button className='btn' style={{padding:"10px"}} onClick={(e) => add_to_cart(commodity[0])}><b>Add to cart</b></button>
+                            <p className='menu_p'><b>Item</b></p>
+                            <p>{commodity}</p> <br/>
+                            <p className='menu_p'><b>Enter the weight</b> (kg)</p>
+                            <input type='number' id={i} onChange={(e) => setQuantity(e.target.value)}/> <br/><br/>
+                            <button className='btn' style={{padding:"10px"}} onClick={(e) => add_to_cart(commodity,i)}><b>Add to cart</b></button>
                         </div>
                     ))
                 }

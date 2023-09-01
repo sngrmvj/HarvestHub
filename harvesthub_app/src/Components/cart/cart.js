@@ -17,13 +17,14 @@ const Cart = () => {
     useEffect(() => {
         // Fetch grocery details from the backend API
         // Replace 'your_backend_endpoint' with the actual API endpoint
-        validAuthentication();
-        fetch(`${GET_CART}`)
+        // validAuthentication();
+        let email = localStorage.getItem('email')
+        fetch(`${GET_CART}?email=${email}`)
             .then(response => response.json())
             .then(data => {
                 // Assuming data is a dictionary with grocery details
-                setGroceries(data.items);
-                calculateTotals(data.items);
+                setGroceries(data.data);
+                calculateTotals(data.data);
             })
             .catch(error => console.error('Error fetching data:', error));
     }, []);
@@ -66,8 +67,8 @@ const Cart = () => {
             },
         };
 
-
-        axios.delete(`${DELETE_ITEM_IN_CART}?commodity=${itemToRemove}`, options)
+        let email = localStorage.getItem('email')
+        axios.delete(`${DELETE_ITEM_IN_CART}?commodity=${itemToRemove}&email=${email}`, options)
         .then(res => {
             if (res.status === 200) {
                 toast.success(res.data.message);
@@ -97,7 +98,8 @@ const Cart = () => {
                 commodities: groceries,
             }
         };
-        axios.put(`${PURCHASE_ORDER}`, options)
+        let email = localStorage.getItem('email')
+        axios.put(`${PURCHASE_ORDER}?email=${email}`, options)
         .then(res => {
             if (res.status === 200) {
                 toast.success(`Successfully purchased the order`)
@@ -141,24 +143,45 @@ const Cart = () => {
 
             <div className='cart-container'>
                 <header className="cart-header"><b>Cart</b></header>
-                <ul className="cart-list">
-                    {groceries.map(item => (
-                        <li key={item.id} className="cart-item">
-                            <div className="cart-item-details">
-                                <p className="cart-item-name">{item.name}</p>
-                                <p className="cart-item-weight-price">
-                                    Weight: {item.weight} kg, Price: {item.price} Rs
-                                </p>
-                                <button onClick={() => removeFromCart(item)}>Remove</button>
+                {/* <ul>
+                    {groceries.map((item, i) => (
+                        <span key={i} style={{padding:"10px"}}>
+                            <div>
+                                <span style={{float:"left"}}>
+                                    <label><b>commodity</b></label><br/>
+                                    <label>{item['commodity']}</label> <br/><br/>
+                                    <label><b>Weight</b></label><br/>
+                                    <label>{item['weight']}</label><br/><br/>
+                                </span>
+                                <span style={{float:"right", marginTop:"30px"}}>
+                                    <button style={{border:"none",backgroundColor:"transparent", color:"#2E8DCD", cursor:"pointer"}} onClick={() => removeFromCart(item['commodity'])}><b>Remove</b></button>
+                                </span>
                             </div>
-                        </li>
+
+                        </span>
                     ))}
-                </ul>
+                </ul> */}
+
+                <div style={{ listStyle: "none", padding: 0 }}>
+                    {groceries.map((item, i) => (
+                        <div key={i} className='li' style={{ padding: "10px", display: "flex", flexDirection:"row", justifyContent: "space-between",  borderBottom: "1px solid #ccc" }}>
+                            <div>
+                                <p><b>Commodity</b></p>
+                                <p>{item['commodity']}</p><br />
+                                <p><b>Weight</b></p>
+                                <p>{item['weight']}</p><br />
+                            </div>
+                            <div>
+                                <button style={{ border: "none", backgroundColor: "transparent", color: "#2E8DCD", cursor: "pointer", marginTop:"20px" }} onClick={() => removeFromCart(item['commodity'])}><b>Remove</b></button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
                 <div className="cart-totals">
                     <p className="cart-total-label">Total Weight:</p>
                     <p className="cart-total-value">{totalWeight} kg</p>
                 </div>
-                <div className="cart-totals">
+                <div className="cart-totals_below">
                     <p className="cart-total-label">Total Price:</p>
                     <p className="cart-total-value">{totalPrice} Rs</p>
                 </div> <br/>
@@ -166,6 +189,7 @@ const Cart = () => {
                     <button className='btn' onClick={purchase_order}><b>Purchase</b></button>
                 </div>
             </div>
+            <br/><br/><br/>
 
             <ToastContainer />
         </div>

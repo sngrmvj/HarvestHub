@@ -24,7 +24,7 @@ const Signup = () => {
         if(localStorage.getItem('isLoggedIn') === "true"){
             navigate("/menu");
         }
-        validAuthentication();
+        // validAuthentication();
     });
 
 
@@ -32,15 +32,15 @@ const Signup = () => {
         navigate("/");
     }
 
-    const validAuthentication = () => {
-        axios.get(`${VALIDATE_USER}`)
-        .then((res) => {
-            navigate("/menu");
-        })
-        .catch((error) => {
-            toast.error("User Autentication Failed");
-        })
-    }
+    // const validAuthentication = () => {
+    //     axios.get(`${VALIDATE_USER}`)
+    //     .then((res) => {
+    //         navigate("/menu");
+    //     })
+    //     .catch((error) => {
+    //         toast.error("User Autentication Failed");
+    //     })
+    // }
 
     const handleSubmit = (e) => {
         e.preventDefault();
