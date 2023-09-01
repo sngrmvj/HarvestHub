@@ -157,14 +157,12 @@ def send_truck_to_owner():
 
     isTruckSent, agent_id = False, None
 
-    email = request.cookies.get('agent_email')
-
     try:
         id_query = text("SELECT agent_id FROM agent WHERE email= :email")
-        result = db.session.execute(id_query, {"email": email})
-        row = result.fetchone()
-        if row:
-            agent_id = row[0]
+        result = db.session.execute(id_query, {"email": request.form.get('agent_email')})
+        for item in result:
+            agent_id = item[0]
+            break
     except Exception as error:
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
 
@@ -183,6 +181,20 @@ def send_truck_to_owner():
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# >>>> Logout API
+# ---------------------------------------------------------------------------------------------------------------------
+@app.route('/agent/logout', methods=['GET'])
+def logout():
+    response = make_response(redirect(url_for('farmer_page', message="Successfully logged out!!")))
+    response.delete_cookie('login_status')
+    response.delete_cookie('agent_email')
+    return response
+# ---------------------------------------------------------------------------------------------------------------------
+
+
 
 def send_truck(agent_id):
 

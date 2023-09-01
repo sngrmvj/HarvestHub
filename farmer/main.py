@@ -39,7 +39,10 @@ def farmer_page():
         # Here in this case if the cookie is not there we need to make sure that farmer logs in
         return render_template('login.html', message=arg_message)
     else:
-        all_receipts = get_receipts()
+        email = request.cookies.get('farmer_email')
+        all_receipts = get_receipts(email)
+        if not all_receipts:
+            arg_message = "Error in fetching the receipts. Please contact the administrator"
         return render_template('index.html', message=arg_message, row_data=all_receipts)
 
 
@@ -76,6 +79,7 @@ def login_form():
         response = make_response(redirect(url_for('farmer_page', message="Successfully logged In!!")))
         # Set a cookie to indicate successful login with 90 minutes of expiry
         response.set_cookie('farmer_login_status', 'success', secure=True, expires=datetime.datetime.now() + datetime.timedelta(minutes=90))
+        response.set_cookie('farmer_email', request.form.get('email'), secure=True, expires=datetime.datetime.now() + datetime.timedelta(minutes=90))
         return response
     else:
         return redirect(url_for('farmer_page', message='Authentication failed'))
@@ -85,17 +89,36 @@ def login_form():
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# >>>> Logout API
+# ---------------------------------------------------------------------------------------------------------------------
+@app.route('/farmer/logout', methods=['GET'])
+def logout():
+    response = make_response(redirect(url_for('farmer_page', message="Successfully logged out!!")))
+    response.delete_cookie('farmer_login_status')
+    response.delete_cookie('farmer_email')
+    return response
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # >>>> Fetch the list of receipts for the farmer
 # ---------------------------------------------------------------------------------------------------------------------
-# @app.route('/farmer/allReceipts', methods=['GET'])
-def get_receipts():
+def get_receipts(email):
 
-    all_receipts = []
+    all_receipts, farmer_id = [], None
 
     try:
-        receipts_query = text("SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight, created_date FROM agent_farmer")
-        result = db.session.execute(receipts_query)
-        # Todo - Check whether to use result=result.fetchall()
+        get_id_query = text("SELECT farmer_id FROM farmer WHERE email= :email")
+        result = db.session.execute(get_id_query, {'email': email})
+        for item in result:
+            farmer_id = item[0]
+    except Exception as error:
+        print(f"Failed to get the details of the farmer - {error}\n\n{traceback.format_exc()}")
+        return []
+
+    try:
+        receipts_query = text("SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight, created_date FROM agent_farmer WHERE farmer_id= :farmer_id")
+        result = db.session.execute(receipts_query, {'farmer_id': farmer_id})
         for row in result:
             all_receipts.append({
                 'Agent ID': row.agent_id, 

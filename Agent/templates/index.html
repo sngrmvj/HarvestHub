@@ -185,9 +185,13 @@
 
         <div style="padding: 1opx;margin-left: 20px;">
             <button class="btn" id="send_truck">Send truck</button> 
+            <button class="btn" id="logout">Logout</button> 
             <script>
                 document.getElementById("send_truck").addEventListener("click", function() {
                     window.location.href = "{{ url_for('send_truck_to_owner') }}";
+                });
+                document.getElementById("logout").addEventListener("click", function() {
+                    window.location.href = "{{ url_for('logout') }}";
                 });
             </script>
         </div> <br/><br/>
