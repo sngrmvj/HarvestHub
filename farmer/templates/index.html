@@ -26,7 +26,8 @@
             }
             .main{
                 display: flex;
-                padding:40px; 
+                padding-left:40px; 
+                padding-right:40px; 
                 justify-content:center;
                 align-items:center;
             }
@@ -37,8 +38,8 @@
                 padding:40px; 
                 justify-content:center;
                 align-items:center;
-                width: fit-content;
-                margin-top: 100px;
+                width: 100%;
+                margin-top: 50px;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
             }
             input[type="number"]{
@@ -76,6 +77,7 @@
                 font-family: Arial, Helvetica, sans-serif;
                 margin-bottom: 5px;
                 padding-top: 3px;
+
             }
 
             .header{
@@ -160,7 +162,7 @@
                 }
             }
         </style>
-        <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
         <link rel="stylesheet"  href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"/>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"/>
     </head>
@@ -177,30 +179,51 @@
 
         <div class="main">
             <div class="main_div">
-                <div id="myGrid" style="height: 900px;width:100%" class="ag-theme-alpine"></div>
-
+                <p style="font-size: 12px;">(You can scroll horizontally and vertically in the table)</p>
+                <div id="myGrid" style="height: 500px; width:100%;" class="ag-theme-alpine"></div>
                 <script>
+
+                    // JavaScript code to send data to the server
+                    // function viewReceipt(data) {
+                    //     const xhr = new XMLHttpRequest();
+                    //     xhr.open('POST', '/farmer/receipt', true); // Replace with your Flask route URL
+                    //     xhr.setRequestHeader('Content-Type', 'application/json');
+                    //     xhr.onreadystatechange = function() {
+                    //         if (xhr.readyState === 4 && xhr.status === 200) {
+                    //             // Handle the server's response if needed
+                    //             console.log('Data sent successfully:', );
+                    //             window.location.assign(xhr.responseText);
+                    //         }
+                    //     };
+                    //     xhr.send(JSON.stringify(data));
+                    // }
                     document.addEventListener('DOMContentLoaded', function () {
-                        var rowData = '{{ row_data | tojson | safe }}';
+
+                        var rowData = JSON.parse('{{ row_data | tojson | safe }}');
                         var gridOptions = {
                             columnDefs: [
-                                { headerName: "Agent ID", pinned: true},
-                                { headerName: "Farmer ID", pinned: true},
-                                { headerName: "Truck ID", },
-                                { headerName: "Bag ID", },
-                                { headerName: "Owner", },
-                                { headerName: "Commodity", },
-                                { headerName: "Selling Price", },
-                                { headerName: "Bag Weight", },
-                                { headerName: "Date of sell", }
+                                { field: "Agent ID", pinned: true},
+                                { field: "Farmer ID", pinned: true},
+                                { field: "Truck ID", wrapText: true, width: 315},
+                                { field: "Bag ID",wrapText: true, width: 315 },
+                                { field: "Owner", },
+                                { field: "Commodity", },
+                                { field: "Selling Price", },
+                                { field: "Bag Weight", },
+                                { field: "Date of sell", wrapText: true, width: 315},
+                                // { field: "View Receipt", cellRenderer: params => {
+                                //         return `<a style="color:#046FAA;cursor:pointer, textAlign:center">View</a>`;
+                                //     }
+                                // }
                             ],
                             rowData: rowData,
                             defaultColDef: {
                                 sortable: true,
                                 resizable: true
-                            }
+                            },
+                            // onCellClicked: (event) => viewReceipt(event.data)
                         };
-                        var gridDiv = document.querySelector('#myGrid');
+                        const gridDiv = document.querySelector('#myGrid');
                         new agGrid.Grid(gridDiv, gridOptions);
                     });
                 </script>

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
 import datetime, traceback
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import text
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -34,7 +35,7 @@ def farmer_page():
     arg_message = request.args.get('message')  # Passed during redirect
     if not arg_message:
         arg_message = "Welcome"
-    if login_status == 'success':
+    if login_status != 'success':
         # Here in this case if the cookie is not there we need to make sure that farmer logs in
         return render_template('login.html', message=arg_message)
     else:
@@ -57,7 +58,7 @@ def login_form():
     }
 
     try:
-        login_query = "SELECT password FROM farmer WHERE email= :email"
+        login_query = text("SELECT password FROM farmer WHERE email= :email")
         result = db.session.execute(login_query, {"email": data['email']})
     except Exception as error:
         print(f"Error in fetching the login details - {error} \n\n{traceback.format_exc()}")
@@ -92,7 +93,7 @@ def get_receipts():
     all_receipts = []
 
     try:
-        receipts_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight, created_date FROM agent_farmer"
+        receipts_query = text("SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight, created_date FROM agent_farmer")
         result = db.session.execute(receipts_query)
         # Todo - Check whether to use result=result.fetchall()
         for row in result:
@@ -109,7 +110,7 @@ def get_receipts():
             })
     except Exception as error:
         print(f"Error in fetching the all receipt details - {error} \n\n{traceback.format_exc()}")
-    
+
     return all_receipts
 
 
@@ -120,27 +121,20 @@ def get_receipts():
 # ---------------------------------------------------------------------------------------------------------------------
 # >>>> Display of the receipt
 # ---------------------------------------------------------------------------------------------------------------------
-# @app.route('/farmer/receipt', methods=['PUT'])
+@app.route('/farmer/receipt', methods=['POST'])
 def display_receipt():
 
-    data = {
-        "bag_id": request.form.get('bag_id'),
-        "farmer_id": request.form.get('farmer_id'),
-    }
-
     username, receipt_data = None, {}
-
-    # Todo - You can fetch it from the ag-grid row itself by sending the command or we can add a modal to display and download as pdf required 
 
     try:
         pass
         # username_query = "SELECT username FROM farmer WHERE farmer_id= :farmer_id"
-        # result = db.session.execute(username_query, {"farmer_id": data['email']})
+        # result = db.session.execute(username_query, {"farmer_id": farmer_id})
         # for row in result:
         #     username = row[0]
 
-        # receipt_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, created_date FROM agent_farmer WHERE bag_id= :bag_id"
-        # result = db.session.execute(receipt_query, {"bag_id": data['bag_id']})
+        # receipt_query = "SELECT agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, created_date FROM agent_farmer WHERE farmer_id=:farmer_id AND bag_id= :bag_id"
+        # result = db.session.execute(receipt_query, {"bag_id": bag_id, "farmer_id": farmer_id})
 
         # for row in result:
         #     receipt_data['farmer'] = username

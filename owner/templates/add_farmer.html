@@ -189,7 +189,7 @@
         <div class="main">
             <div class="main_div">
                 <header class="header">Provide Farmer Details</header> <br/><br/>
-                <form action="{{ url_for('add_agent') }}" method="POST" id="agent_form">
+                <form action="{{ url_for('add_farmer') }}" method="POST" id="agent_form">
 
                     <div>
                         <label for="name">Name:</label><br>
@@ -202,14 +202,18 @@
                         <input type="email" name="email" id="email" autocomplete="off" required>
                     </div>
                     <br><br>
+
+                    <div>
+                        <label for="password">Password:</label><br>
+                        <input type="password" name="password" id="password" autocomplete="off" minlength="10" required>
+                    </div>
+                    <br><br>
                     
                     <div>
                         <label htmlFor="address">Address:</label><br/>
                         <textarea
                             id="address"
-                            name= "address"
-                            rows="5"
-                            cols="50">
+                            name= "address" style="width:320px" rows="3">
                         </textarea>
                     </div>
                     <br><br>

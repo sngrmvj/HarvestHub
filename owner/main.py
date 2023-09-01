@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for
-import random, string, traceback, redis, os
+import random, string, traceback, redis, os, json
 from setup import app, db
 from models import Farmer, Agent, SellStatistics, WareHouse
 
@@ -75,7 +75,7 @@ def farmer_page():
 @app.route('/owner/add_agent', methods=['POST'])
 def add_agent():
     try:
-        agent = Agent(agent_id=generate_id(), username=request.form.get('name'), email=request.form.get('email'), password=request.form.get('password'))
+        agent = Agent(agent_id=generate_id(), username=request.form.get('name').strip(), email=request.form.get('email').strip(), password=request.form.get('password'))
         db.session.add(agent)
         db.session.commit()
     except Exception as error:
@@ -95,7 +95,7 @@ def add_agent():
 @app.route('/owner/add_farmer', methods=['POST'])
 def add_farmer():
     try:
-        farmer = Farmer(farmer_id=generate_id(), username=request.form.get('name'), email=request.form.get('email'), password=request.form.get('password'))
+        farmer = Farmer(farmer_id=generate_id(), username=request.form.get('name').strip(), email=request.form.get('email').strip(), password=request.form.get('password'), address=request.form.get('address').strip())
         db.session.add(farmer)
         db.session.commit()
     except Exception as error:
@@ -115,21 +115,18 @@ def add_farmer():
 
 def fetch_new_commodities():
 
+    temp = []
     try:
         with redis.Redis(host='localhost', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection: 
             retrieved_data = redis_connection.hgetall("new_commoditites")
             if retrieved_data:
-                retrieved_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in retrieved_data.items()}
+                for item in retrieved_data:
+                    temp.append(json.loads(retrieved_data[item].decode('utf-8')))
             else:
                 raise Exception("Data not retrieved from redis")
     except Exception as error:
         print(f"Error in getting the date from redis for the owner - {error} \n\n{traceback.format_exc()}")
-    else:
-        temp = []
-        for item in retrieved_dict:
-            temp.append(retrieved_dict[item])
-    
-    return {}
+    return temp
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -138,7 +135,7 @@ def fetch_new_commodities():
 # ---------------------------------------------------------------------------------------------------------------------
 # >>>> Add Commodtities
 # ---------------------------------------------------------------------------------------------------------------------
-@app.route('/owner/add_commodity', methods=['PUT'])
+@app.route('/owner/add_commodity', methods=['POST'])
 def add_commodity():
 
     insertion_successful = True
@@ -146,34 +143,35 @@ def add_commodity():
     try:
         # First we are removing the element from the redis
         with redis.Redis(host='localhost', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection: 
-            retrieved_data = redis_connection.hgetall("new_commoditites")
+            bagId = request.form.get('bag_id').encode('ascii')
+            retrieved_data = redis_connection.hget("new_commoditites", bagId)
             if retrieved_data:
-                retrieved_dict = {key.decode('utf-8'): value.decode('utf-8') for key, value in retrieved_data.items()}
-                del retrieved_dict[request.form.get('bag_id')]
-                redis_connection.hmset("new_commoditites", retrieved_dict)
+                redis_connection.hdel("new_commoditites", bagId)
+                print(f"\t{bagId} is deleted")
             else:
                 raise Exception(f"Data not retrieved from redis")
     except Exception as error:
         print(f"Error in retrieval / insertion to the redis - {error} \n\n{traceback.format_exc()}")
         insertion_successful = False
 
-    try:
-        warehouse = WareHouse(
-            agent_id=request.form.get('agent_id'),
-            farmer_id=request.form.get('farmer_id'),
-            bag_id=request.form.get('bag_id'),
-            owner=request.form.get('owner'),
-            commodity=request.form.get('commodity'),
-            price_kg=request.form.get('price_kg'),
-            weight=request.form.get('weight'),
-            delivered=True,
-            profit_percent=request.form.get('profit_percent')
-        )
-        db.session.add(warehouse)
-        db.session.commit()
-    except Exception as error:
-        print(f"Error in adding the details to the warehouse for farmer id - {{request.form.get('farmer_id')}} / Bag id - {request.form.get('bag_id')} - {error} - \n\n{traceback.format_exc()}")
-        insertion_successful = False
+    if insertion_successful:
+        try:
+            warehouse = WareHouse(
+                agent_id=request.form.get('agent_id'),
+                farmer_id=request.form.get('farmer_id'),
+                bag_id=request.form.get('bag_id'),
+                owner=request.form.get('owner'),
+                commodity=request.form.get('commodity'),
+                price_kg=int(float(request.form.get('price_kg'))),
+                weight=float(request.form.get('weight')),
+                delivered=True,
+                profit_percent=int(request.form.get('profit_percent'))
+            )
+            db.session.add(warehouse)
+            db.session.commit()
+        except Exception as error:
+            print(f"Error in adding the details to the warehouse for farmer id - {request.form.get('farmer_id')} / Bag id - {request.form.get('bag_id')} - {error} - \n\n{traceback.format_exc()}")
+            insertion_successful = False
 
     message = 'Added the commodity to the database'
     if not insertion_successful:

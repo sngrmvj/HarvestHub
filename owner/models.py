@@ -24,6 +24,7 @@ class Farmer(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    address = db.Column(db.String(240), nullable=False)
 
     def check_password(self, password):
         return self.password == password
@@ -35,8 +36,8 @@ class Agent_Farmer(db.Model):
     __tablename__ = 'agent_farmer'
     agent_id = db.Column(db.String(10), nullable=False)
     farmer_id = db.Column(db.String(10), nullable=False)
-    truck_id = db.Column(db.String(80), unique=True, nullable=False)
-    bag_id = db.Column(db.String(80), nullable=False)
+    truck_id = db.Column(db.String(80), nullable=False)
+    bag_id = db.Column(db.String(80), unique=True, nullable=False)
     owner = db.Column(db.String(80), default="HarvestHub_Owner")
     commodity = db.Column(db.String(80), nullable=False)
     price_kg = db.Column(db.Integer, nullable=False)
@@ -53,8 +54,8 @@ class Agent_Farmer(db.Model):
 
 class WareHouse(db.Model):
     __tablename__ = 'warehouse'
-    agent_id = db.Column(db.String(10), unique=True, nullable=False)
-    farmer_id = db.Column(db.String(10), unique=True, nullable=False)
+    agent_id = db.Column(db.String(10), nullable=False)
+    farmer_id = db.Column(db.String(10), nullable=False)
     bag_id = db.Column(db.String(80), unique=True, nullable=False)
     owner = db.Column(db.String(80), default="HarvestHub_Owner")
     commodity = db.Column(db.String(80), nullable=False)

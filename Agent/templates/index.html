@@ -59,6 +59,18 @@
                 cursor: text;
             }
 
+            input[type="email"]{
+                font-size: 16px;
+                border: 0;
+                border-bottom: 1px solid #ccc;
+                width: 320px;
+                -webkit-appearance: none;
+                border-radius: 0;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                cursor: text;
+            }
+
             input:focus {
                 outline: 0;
                 border-bottom: 1px solid #2E8DCD;
@@ -210,8 +222,8 @@
                     <br><br>
 
                     <div>
-                        <label for="agent_id">Agent ID:</label><br>
-                        <input type="text" name="agent_id" id="agent_id" autocomplete="off" required>
+                        <label for="agent_email">Agent Email:</label><br>
+                        <input type="email" name="agent_email" id="agent_email" autocomplete="off" required>
                     </div>
                     <br><br>
                     

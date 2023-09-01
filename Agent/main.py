@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
 import json, uuid, datetime, redis, traceback, os, copy
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import text
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -32,7 +33,6 @@ def root():
 @app.route("/agent/")
 def agent_page():
     login_status = request.cookies.get('login_status')
-    print(login_status)
     arg_message = request.args.get('message')  # Passed during redirect
     if not arg_message:
         arg_message = "Welcome"
@@ -58,11 +58,11 @@ def login_form():
     }
 
     try:
-        login_query = "SELECT password FROM agent WHERE email= :email"
+        login_query = text("SELECT password FROM agent WHERE email= :email")
         result = db.session.execute(login_query, {"email": data['email']})
     except Exception as error:
         print(f"Error in fetching the login details - {error} \n\n{traceback.format_exc()}")
-        return redirect(url_for('farmer_page', message= f'Error in fetching the login details - {error}'))
+        return redirect(url_for('agent_page', message= f'Error in fetching the login details - {error}'))
     else:
         row = result.fetchone()
         if row:
@@ -76,6 +76,7 @@ def login_form():
         response = make_response(redirect(url_for('agent_page', message="Successfully logged In!!")))
         # Set a cookie to indicate successful login with 90 minutes of expiry
         response.set_cookie('login_status', 'success', secure=True, expires=datetime.datetime.now() + datetime.timedelta(minutes=90))
+        response.set_cookie('agent_email', request.form.get('email'), secure=True, expires=datetime.datetime.now() + datetime.timedelta(minutes=90))
         return response
     else:
         return redirect(url_for('agent_page', message='Authentication failed'))
@@ -94,11 +95,11 @@ def insert_commodity_bag():
     isTruckSent, agent_id = False, None
 
     try:
-        id_query = "SELECT agent_id FROM agent WHERE email= :email"
+        id_query = text("SELECT agent_id FROM agent WHERE email= :email")
         result = db.session.execute(id_query, {"email": request.form.get('agent_email')})
-        row = result.fetchone()
-        if row:
-            agent_id = row[0]
+        for item in result:
+            agent_id = item[0]
+            break
     except Exception as error:
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
     
@@ -126,15 +127,15 @@ def insert_commodity_bag():
             retrieved_data = redis_connection.hgetall(data['agent_id'])
             if retrieved_data:
                 # Deserialize the 'items' field value back into a list
-                if b'items' in retrieved_data:
+                if b'items' in retrieved_data and len(retrieved_data[b'items']) > 0:
                     stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
                     stored_list.append(data) # Append the data to the retrievd list
-                    redis_connection.hmset(data['agent_id'], {'items': json.dumps([stored_list])}) # Store it back to the redis
+                    redis_connection.hset(data['agent_id'], 'items', json.dumps([stored_list])) # Store it back to the redis
                 else:
-                    print("Looks like the items key not available in the key retrieved")
+                    redis_connection.hset(data['agent_id'], 'items', json.dumps([data]))
             else:
                 # Use HMSET to set the serialized list as a value for the 'items' field
-                redis_connection.hmset(data['agent_id'], {'items': json.dumps([data])})
+                redis_connection.hset(data['agent_id'], 'items', json.dumps([data]))
                 # Setting the list as the data so that we can keep on add the bags to the list till the truck weight goes down
     except Exception as error:
         print(f"Error in adding the bag - {error} \n\n{traceback.format_exc()}")
@@ -151,14 +152,16 @@ def insert_commodity_bag():
 # ---------------------------------------------------------------------------------------------------------------------------------
 # >>>> Send Truck API
 # ---------------------------------------------------------------------------------------------------------------------------------
-@app.route('/agent/truck', methods=['POST'])
+@app.route('/agent/truck', methods=['GET'])
 def send_truck_to_owner():
 
     isTruckSent, agent_id = False, None
 
+    email = request.cookies.get('agent_email')
+
     try:
-        id_query = "SELECT agent_id FROM agent WHERE email= :email"
-        result = db.session.execute(id_query, {"email": request.form.get('agent_email')})
+        id_query = text("SELECT agent_id FROM agent WHERE email= :email")
+        result = db.session.execute(id_query, {"email": email})
         row = result.fetchone()
         if row:
             agent_id = row[0]
@@ -167,6 +170,7 @@ def send_truck_to_owner():
 
     if agent_id:
         value = send_truck(agent_id)
+
         if not value:
             return redirect(url_for('agent_page', message="Error in sending the truck"))
         else:
@@ -197,15 +201,72 @@ def send_truck(agent_id):
             if retrieved_data:
                 if b'items' in retrieved_data:
                     stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    if not stored_list:
+                        return False
                     info_to_owner = copy.deepcopy(stored_list)
 
-                agent_farmer_query = "INSERT INTO agent_farmer (agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight) VALUES (:agent_id, :farmer_id, :truck_id, :bag_id, :owner, :commodity, :price_kg, :weight)"
+                agent_farmer_query = text("INSERT INTO agent_farmer (agent_id, farmer_id, truck_id, bag_id, owner, commodity, price_kg, weight, created_date) VALUES (:agent_id, :farmer_id, :truck_id, :bag_id, :owner, :commodity, :price_kg, :weight, :created_date)")
 
-                for item in stored_list:
+                stored_list = stored_list[0]
+                if (isinstance(stored_list, dict)):
                     with app.app_context():
                         db.session.execute(
                             agent_farmer_query,
                             {
+                                'agent_id': stored_list['agent_id'],  # New weight value
+                                'farmer_id': stored_list['farmer_id'],   # Bag ID to identify the row to update
+                                'truck_id': truck_id,
+                                'bag_id': stored_list['bag_id'],
+                                'owner': 'HarvestHub_Owner',
+                                'commodity': stored_list['commodity'],
+                                'price_kg': stored_list['price'],
+                                'weight': stored_list['weight'],
+                                'created_date': datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+                            }
+                        )
+                        db.session.commit()
+                else:
+                    for item in stored_list: 
+                        with app.app_context():
+                            db.session.execute(
+                                agent_farmer_query,
+                                {
+                                    'agent_id': item['agent_id'],  # New weight value
+                                    'farmer_id': item['farmer_id'],   # Bag ID to identify the row to update
+                                    'truck_id': truck_id,
+                                    'bag_id': item['bag_id'],
+                                    'owner': 'HarvestHub_Owner',
+                                    'commodity': item['commodity'],
+                                    'price_kg': item['price'],
+                                    'weight': item['weight'],
+                                    'created_date': datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+                                }
+                            )
+                            db.session.commit()
+            redis_connection.hset(agent_id, 'items', '')
+    except Exception as error:
+        print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
+        return False 
+    else:
+        if info_to_owner:
+            try:
+                with redis.Redis(host='localhost', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+                    if (isinstance(stored_list, dict)):
+                        temp = {
+                            'agent_id': stored_list['agent_id'],  # New weight value
+                            'farmer_id': stored_list['farmer_id'],   # Bag ID to identify the row to update
+                            'truck_id': truck_id,
+                            'bag_id': stored_list['bag_id'],
+                            'owner': 'HarvestHub_Owner',
+                            'commodity': stored_list['commodity'],
+                            'price_kg': stored_list['price'],
+                            'weight': stored_list['weight'],
+                            'created_date': datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+                        }
+                        redis_connection.hset('new_commoditites', stored_list['bag_id'], json.dumps(temp))
+                    else:
+                        for item in stored_list: 
+                            temp = {
                                 'agent_id': item['agent_id'],  # New weight value
                                 'farmer_id': item['farmer_id'],   # Bag ID to identify the row to update
                                 'truck_id': truck_id,
@@ -213,36 +274,17 @@ def send_truck(agent_id):
                                 'owner': 'HarvestHub_Owner',
                                 'commodity': item['commodity'],
                                 'price_kg': item['price'],
-                                'weight': item['weight']
+                                'weight': item['weight'],
+                                'created_date': datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
                             }
-                        )
-                        db.session.commit()
-            redis_connection.hmset(agent_id, {'items': json.dumps([])})
-    except Exception as error:
-        print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
-        return False 
-    else:
-        if info_to_owner:
-            with redis.Redis(host='localhost', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
-                for item in stored_list:
-                    temp = {
-                        'agent_id': item['agent_id'],  # New weight value
-                        'farmer_id': item['farmer_id'],   # Bag ID to identify the row to update
-                        'truck_id': truck_id,
-                        'bag_id': item['bag_id'],
-                        'owner': 'HarvestHub_Owner',
-                        'commodity': item['commodity'],
-                        'price_kg': item['price'],
-                        'weight': item['weight']
-                    }
-                    redis_connection.hmset(item['bag_id'], temp)
-                    print(f"Insertion into redis for database 2 - {item['bag_id']}")
-
-
+                            redis_connection.hset('new_commoditites', item['bag_id'], json.dumps(temp))
+                        
+                        print(f"Insertion into redis for database 2 - {item['bag_id']}")
+                return True
+            except Exception as error:
+                print(f"Error in insertion to the redis database 2")
 
 # ---------------------------------------------------------------------------------------------------------------------------------
-
-
 
 
 

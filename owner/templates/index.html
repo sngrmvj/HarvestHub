@@ -34,11 +34,11 @@
                 display: flex;
                 flex-direction: column;
                 flex-wrap: wrap;
-                padding:40px; 
+                padding:20px; 
                 justify-content:center;
                 align-items:center;
                 width: fit-content;
-                margin-top: 100px;
+                margin-top: 20px;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
             }
             input[type="number"]{
@@ -102,7 +102,7 @@
                 border: 2px solid #2E8DCD;
             }
 
-            .maindiv .btn:hover { 
+            .btn:hover { 
                 /* outline: 2px dotted #55d7dc;  */
                 border: 2px solid #2E8DCD;
                 background-color: transparent;
@@ -186,7 +186,7 @@
                 document.getElementById("add_farmer").addEventListener("click", function() {
                     window.location.href = "{{ url_for('farmer_page') }}";
                 });
-                document.getElementById("add_farmer").addEventListener("click", function() {
+                document.getElementById("statistics").addEventListener("click", function() {
                     window.location.href = "{{ url_for('get_monthly_statistics') }}";
                 });
             </script>
@@ -200,42 +200,48 @@
                             <form action="{{ url_for('add_commodity') }}" method="POST" id="agent_form">
                                 <div>
                                     <label><b>Agent ID</b></label> <br/>
-                                    <label>{{ item['agent_id'] }}</label>
+                                    <label style="color:black">{{ item['agent_id'] }}</label>
+                                    <input type="hidden" name="agent_id" value="{{ item['agent_id'] }}" />
                                 </div> <br/>
                                 <div>
                                     <label><b>Farmer ID</b></label> <br/>
-                                    <label>{{ item['farmer_id'] }}</label>
+                                    <label style="color:black">{{ item['farmer_id'] }}</label>
+                                    <input type="hidden" name="farmer_id" value="{{ item['farmer_id'] }}" />
                                 </div> <br/>
                                 <div>
                                     <label><b>truck ID</b></label> <br/>
-                                    <label>{{ item['truck_id'] }}</label>
+                                    <label style="color:black">{{ item['truck_id'] }}</label>
+                                    <input type="hidden" name="truck_id" value="{{ item['truck_id'] }}" />
                                 </div> <br/>
                                 <div>
                                     <label><b>Bag ID</b></label> <br/>
-                                    <label>{{ item['bag_id'] }}</label>
+                                    <label style="color:black">{{ item['bag_id'] }}</label>
+                                    <input type="hidden" name="bag_id" value="{{ item['bag_id'] }}" />
                                 </div> <br/>
                                 <div>
                                     <label><b>Commodity</b></label> <br/>
-                                    <label>{{ item['commodity'] }}</label>
+                                    <label style="color:black">{{ item['commodity'] }}</label>
+                                    <input type="hidden" name="commodity" value="{{ item['commodity'] }}" />
                                 </div> <br/>
                                 <div>
                                     <label><b>Price/Kg</b></label> <br/>
-                                    <label>{{ item['price_kg'] }}</label>
+                                    <label style="color:black">{{ item['price_kg'] }}</label>
+                                    <input type="hidden" name="price_kg" value="{{ item['price_kg'] }}" />
                                 </div> <br/>
                                 <div>
                                     <label><b>Total Weight</b></label> <br/>
-                                    <label>{{ item['weight'] }}</label>
+                                    <label style="color:black">{{ item['weight'] }}</label>
+                                    <input type="hidden" name="weight" value="{{ item['weight'] }}" />
                                 </div> <br/>
                                 <div>
                                     <label><b>Profit Percentage</b></label> <br/>
-                                    <input type="number" name="profit_percent" id="profit_percent" autocomplete="off" min="5" max="10" required />
+                                    <input type="number" name="profit_percent" id="profit_percent" autocomplete="off" min="5" max="10" style="color:black" required />
                                 </div> <br/>
                                 <div>
                                     <input class="btn" type="submit" value="Submit"><br/>
                                 </div>
                             </form>
                         </div> <br/>
-
                     {% endfor %}
                 </div>
             </div>
