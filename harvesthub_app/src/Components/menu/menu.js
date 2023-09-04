@@ -130,6 +130,12 @@ const Menu = () => {
                 }
             </div>
 
+            <div>
+                {
+                    commodtites.length > 0 ? <span></span>: <span style={{padding:"35px", color:'#046FAA', fontWeight:"bold"}}><span className='cart-container'>No Items are available.</span></span>
+                }
+            </div>
+
             <ToastContainer />
         </div>
     );

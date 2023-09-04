@@ -2,10 +2,9 @@
 import './receipt.css';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { GET_RECEIPT, VALIDATE_USER } from '../../constants';
+import { GET_RECEIPT } from '../../constants';
 
 
 const Receipt = () => {
@@ -84,6 +83,18 @@ const Receipt = () => {
                             <p>{result.data[0]['email']}</p>
                         </div> <br/>
                         <div>
+                            <p><b>Commodity</b></p> 
+                            <p>{result.data[0]['commodities']}</p>
+                        </div> <br/>
+                        <div>
+                            <p><b>Price</b></p> 
+                            <p>{result.data[0]['price']}</p>
+                        </div> <br/>
+                        <div>
+                            <p><b>Weight</b></p> 
+                            <p>{result.data[0]['weight']}</p>
+                        </div> <br/>
+                        <div>
                             <p><b>Address</b></p>
                             <p>{result.data[0]['address']}</p>
                         </div> <br/>
@@ -91,10 +102,7 @@ const Receipt = () => {
                             <p><b>Date</b></p>
                             <p>{result.data[0]['date']}</p>
                         </div> <br/>
-                        <div>
-                            <p><b>Commodity</b></p> 
-                            <p>{result.data[0]['commodities']}</p>
-                        </div> <br/>
+
                     </div>
                 </div>
             );

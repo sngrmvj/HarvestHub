@@ -40,7 +40,7 @@ def owner_page():
     return render_template('index.html', message=arg_message, data=data)
 
 # ---------------------------------------------------------------------------------------------------------------------
-    
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # >>>> Add Agent page
@@ -53,7 +53,6 @@ def agent_page():
     return render_template('add_agent.html', message=arg_message)
 
 # ---------------------------------------------------------------------------------------------------------------------
-
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -109,8 +108,6 @@ def add_farmer():
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 def fetch_new_commodities():
@@ -119,17 +116,17 @@ def fetch_new_commodities():
     try:
         with redis.Redis(host='redis', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection: 
             retrieved_data = redis_connection.hgetall("new_commoditites")
+            print(retrieved_data)
             if retrieved_data:
                 for item in retrieved_data:
                     temp.append(json.loads(retrieved_data[item].decode('utf-8')))
-            else:
-                raise Exception("Data not retrieved from redis")
+            # else:
+            #     raise Exception("Data not retrieved from redis")
     except Exception as error:
         print(f"Error in getting the date from redis for the owner - {error} \n\n{traceback.format_exc()}")
     return temp
 
 # ---------------------------------------------------------------------------------------------------------------------
-
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -197,13 +194,15 @@ def get_monthly_statistics():
                 "Farmer ID": item.farmer_id,
                 "Commodity": item.commodity,
                 "Price kg": item.price_kg,
+                "Profit Percentage": item.profit_percent,
+                "Weight": item.weight,
                 "Selling Price" : item.selling_price,
                 "Date of sell": item.created_date
             })
     except Exception as error:
         print(f"Error in fetching the statistics - {error} \n\n {traceback.format_exc()}")
     
-    return render_template('statistics.html', row_data=row_data)
+    return render_template('statistics.html', row_data=row_data, message="All Statistics")
 
 # ---------------------------------------------------------------------------------------------------------------------
 

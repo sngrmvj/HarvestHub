@@ -149,6 +149,8 @@ def get_receipt():
             a_purchase['email'] = purchase.retailer_email
             a_purchase['address'] = purchase.retailer_address
             a_purchase['date'] = purchase.created_date
+            a_purchase['price'] = purchase.price
+            a_purchase['weight'] = purchase.weight
             a_purchase['commodities'] = purchase.commodity # This should be iterated in the frontend
             purchase_details.append(a_purchase)
     except Exception as error:
@@ -177,11 +179,11 @@ def get_cart():
                 if b'items' in retrieved_data and len(retrieved_data[b'items']) > 0:
                     stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
                     return jsonify({'data': stored_list}), 200
-            else:
-                return jsonify({'message': "Cart not available"}), 404
     except Exception as error:
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in fetching the cart - {error}"}), 500
+    
+    return jsonify({'message': "Cart not available"}), 404
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -193,7 +195,9 @@ def get_cart():
 def add_to_cart():
 
     email = request.args['email']
-    BAG_IDS = []
+    BAG_IDS, PURCHASE_ITEMS, STORED_LIST, TOTAL_WEIGHT = [], {}, [], 0
+    data = request.get_json()
+
     try:
         with redis.Redis(host='redis', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
             # redis_connection.hdel('bag_ids', 'items')
@@ -207,67 +211,108 @@ def add_to_cart():
 
 
     try:
-        data = request.get_json()
+        with redis.Redis(host='redis', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
+            retrieved_data = redis_connection.hgetall(email)
+            if retrieved_data:
+                if b'items' in retrieved_data and len(retrieved_data[b'items']) > 0:
+                    stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
+                    for item in stored_list:
+                        PURCHASE_ITEMS[item['commodity']] = item
+    except Exception as error:
+        print(f"Error in fetching the bag_ids - {error} \n\n{traceback.format_exc()}")
+
+
+    try:
+        sql_query = text("SELECT * FROM warehouse WHERE commodity = :commodity ORDER BY commodity")
+        # Execute the query and fetch the results
+        rows_with_commodity = db.session.execute(sql_query, {"commodity": data['data']['item']})
+
+        for row in rows_with_commodity:
+            TOTAL_WEIGHT += row.weight 
+    except Exception as error:
+        print(f"Error in fetching the total_weights - {error} \n\n{traceback.format_exc()}")
+    else:
+        if data['data']['item'] in PURCHASE_ITEMS:
+            if (TOTAL_WEIGHT - int(PURCHASE_ITEMS[data['data']['item']]['weight'])) < int(data['data']['quantity']):
+                return jsonify({'message': f"Quantity of {TOTAL_WEIGHT - PURCHASE_ITEMS[data['data']['item']]['weight']} kgs is available for the {data['data']['item']}"}), 404
+        elif TOTAL_WEIGHT < int(data['data']['quantity']):
+            return jsonify({'message': f"Quantity of {TOTAL_WEIGHT} kgs is available for the {data['data']['item']}"}), 404
+
+
+    try:
         # Construct the native SQL query
         sql_query = text("SELECT * FROM warehouse WHERE commodity = :commodity ORDER BY commodity")
         # Execute the query and fetch the results
         rows_with_commodity = db.session.execute(sql_query, {"commodity": data['data']['item']})
 
-        redis_insert = {
-            'farmer_id': set(), 'bag_id': [], 'weight': 0, 'price': 0, 'commodity': data['data']['item'], 'deleted_bags': set(), 'left_over_weight': None,
-        }
+        if data['data']['item'] in PURCHASE_ITEMS:
+            redis_insert = PURCHASE_ITEMS[data['data']['item']]
+            redis_insert['farmer_id'] = set(redis_insert['farmer_id'])
+            redis_insert['deleted_bags'] = set(redis_insert['deleted_bags'])
+        else:
+            redis_insert = {
+                'farmer_id': set(), 'bag_id': {}, 'weight': 0, 'price': 0, 'commodity': data['data']['item'], 'deleted_bags': set(), 'left_over_weight': {},
+            }
         for row in rows_with_commodity:
-            selling_price = row.price_kg + (row.price_kg * (row.profit_percent / 100))
             
             
+            if row.bag_id in redis_insert['deleted_bags']:
+                continue
 
-            # if row.bag_id not in BAG_IDS:
-            # The idea is to avoid the usage of same bag_id across multiple people until purchase
-            # We are not updating it in database as it should be updated only once the purchase happens.
+            selling_price = row.price_kg + (row.price_kg * (row.profit_percent / 100))
             data['data']['quantity'] = int(data['data']['quantity'])
 
             if data['data']['quantity'] <= 0:
                 break
             if row.weight > data['data']['quantity']:
                 redis_insert['farmer_id'].add(row.farmer_id)
-                redis_insert['bag_id'].append(row.bag_id)
+                if row.bag_id in redis_insert['left_over_weight']:
+                    temp = int(row.weight - data['data']['quantity'] - redis_insert['bag_id'][row.bag_id])
+                    if temp <= 0: 
+                        redis_insert['deleted_bags'].add(row.bag_id)
+                        del redis_insert['bag_id'][row.bag_id]
+                        del redis_insert['left_over_weight'][row.bag_id]
+                    else:
+                        redis_insert['left_over_weight'][row.bag_id] = row.weight - data['data']['quantity'] - redis_insert['bag_id'][row.bag_id]
+                else:
+                    redis_insert['left_over_weight'][row.bag_id] = row.weight - data['data']['quantity']
+                if row.bag_id in redis_insert['bag_id'] and row.bag_id not in redis_insert['deleted_bags']:
+                    redis_insert['bag_id'][row.bag_id] += data['data']['quantity'] 
+                elif row.bag_id not in redis_insert['deleted_bags']:
+                    redis_insert['bag_id'][row.bag_id] = data['data']['quantity']
                 redis_insert['weight'] += int(data['data']['quantity'])
                 redis_insert['price'] += redis_insert['weight'] * selling_price
-                redis_insert['left_over_weight'] = row.weight - data['data']['quantity']
             elif row.weight < data['data']['quantity']:
                 redis_insert['farmer_id'].add(row.farmer_id)
+                if row.bag_id in redis_insert['bag_id']:
+                    data['data']['quantity'] += redis_insert['bag_id'][row.bag_id]
+                    redis_insert['weight'] = 0
+                    redis_insert['price'] = 0
+                    del redis_insert['bag_id'][row.bag_id]
+                    del redis_insert['left_over_weight'][row.bag_id]
                 redis_insert['deleted_bags'].add(row.bag_id)
                 redis_insert['weight'] += row.weight
                 redis_insert['price'] += redis_insert['weight'] * selling_price
             elif row.weight == data['data']['quantity']:
                 redis_insert['farmer_id'].add(row.farmer_id)
+                if row.bag_id in redis_insert['bag_id']:
+                    data['data']['quantity'] += redis_insert['bag_id'][row.bag_id]
+                    redis_insert['weight'] = 0
+                    redis_insert['price'] = 0
+                    del redis_insert['bag_id'][row.bag_id]
+                    del redis_insert['left_over_weight'][row.bag_id]
                 redis_insert['deleted_bags'].add(row.bag_id)
                 redis_insert['weight'] += row.weight
                 redis_insert['price'] += redis_insert['weight'] * selling_price
             data['data']['quantity'] -= row.weight
             BAG_IDS.append(row.bag_id)
-            # else:
-            #     print("Bagid is available")
-
-        if int(data['data']['quantity']) > 0:
-            return jsonify({'message': f"Quantity of {redis_insert['weight']} kgs is available for the {data['data']['item']}"}), 404
-        
 
         redis_insert['farmer_id'] = list(redis_insert['farmer_id'])
         redis_insert['deleted_bags']= list(redis_insert['deleted_bags'])
-
+        PURCHASE_ITEMS[data['data']['item']] = redis_insert
+        STORED_LIST.extend(list(PURCHASE_ITEMS.values()))
         with redis.Redis(host='redis', port=6379, db=0, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
-            # redis_connection.hdel(email, 'items')
-            retrieved_data = redis_connection.hgetall(email)
-            if retrieved_data:
-                if b'items' in retrieved_data and len(retrieved_data[b'items']) > 0:
-                    stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
-                    stored_list.append(redis_insert) # Append the data to the retrievd list
-                    redis_connection.hset(email, 'items', json.dumps(stored_list)) # Store it back to the redis
-                else:
-                    redis_connection.hset(email, 'items', json.dumps([redis_insert]))
-            else:
-                redis_connection.hset(email, 'items', json.dumps([redis_insert]))
+            redis_connection.hset(email, 'items', json.dumps(STORED_LIST))
     except Exception as error:
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
         return jsonify({'error': f"Error in fetching the cart - {error}"}), 500
@@ -368,7 +413,9 @@ def purchase():
         try:
             retailer_results = Retailer.query.filter_by(email=email).all()
             # We need to loop as the retailer_results is an object
-            print(retailer_results)
+            if len(retailer_results) == 0:
+                raise Exception("Looks like logged out. Please log in")
+
             for retailer in retailer_results:
                 purchase = Purchases(
                     purchase_id=purchase_id, 
@@ -378,6 +425,7 @@ def purchase():
                     retailer_phonenumber=retailer.phonenumber, 
                     commodity=item['commodity'], 
                     price=item['price'], 
+                    weight=item['weight'],
                     created_date=datetime.datetime.now()
                 )
                 db.session.add(purchase)
@@ -390,8 +438,8 @@ def purchase():
 
         try:
             insert_query = text("""
-                INSERT INTO sell_statistics (farmer_id, bag_id, owner, commodity, price_kg, selling_price, created_date)
-                VALUES (:farmer_id, :bag_id, :owner, :commodity, :price_kg, :selling_price, :created_date)
+                INSERT INTO sell_statistics (farmer_id, bag_id, owner, commodity, price_kg, profit_percent, weight, selling_price, created_date)
+                VALUES (:farmer_id, :bag_id, :owner, :commodity, :price_kg, :profit_percent, :weight, :selling_price, :created_date)
             """)
             select_weight_query = text("SELECT * FROM warehouse WHERE commodity= :commodity AND bag_id= :bag_id")
             
@@ -409,7 +457,9 @@ def purchase():
                         "HarvestHub_Owner",
                         row.commodity,
                         row.price_kg,
-                        (row.weight) * (row.price_kg + (row.price_kg * (row.profit_percent / 100)))
+                        row.profit_percent,
+                        row.weight, # Weight
+                        (row.weight) * (row.price_kg + (row.price_kg * (row.profit_percent / 100))) # Selling price
                     ])
 
             for bagId in list(item['bag_id']):
@@ -425,7 +475,9 @@ def purchase():
                         "HarvestHub_Owner",
                         row.commodity,
                         row.price_kg,
-                        (item['left_over_weight']) * (row.price_kg + (row.price_kg * (row.profit_percent / 100)))
+                        row.profit_percent,
+                        item['bag_id'][bagId], # Weight
+                        (item['bag_id'][bagId]) * (row.price_kg + (row.price_kg * (row.profit_percent / 100))) # Selling price
                     ])
 
             for detail in details:
@@ -438,7 +490,9 @@ def purchase():
                             'owner': "HarvestHub_Owner",
                             'commodity': detail[3],
                             'price_kg': detail[4],
-                            'selling_price': detail[5],
+                            'profit_percent': detail[5],
+                            'weight': detail[6],
+                            'selling_price': detail[7],
                             'created_date': datetime.datetime.now()
                         }
                     )
@@ -470,7 +524,7 @@ def purchase():
                         BAG_IDS.remove(bagID)
 
             with redis.Redis(host='redis', port=6379, db=3, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
-                redis_connection.hmset('bag_ids', {'items': json.dumps(BAG_IDS)})
+                redis_connection.hset('bag_ids', 'items', json.dumps(BAG_IDS))
 
             for bags in item['bag_id']:
                 update_weight_query = text("UPDATE warehouse SET weight = :new_weight WHERE bag_id = :bag_id AND commodity = :commodity")
@@ -480,7 +534,7 @@ def purchase():
                         db.session.execute(
                             update_weight_query,
                             {
-                                'new_weight': item['left_over_weight'],  # New weight value
+                                'new_weight': item['left_over_weight'][bags],  # New weight value
                                 'bag_id': bags,   # Bag ID to identify the row to update
                                 'commodity': item['commodity']
                             }

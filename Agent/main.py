@@ -104,7 +104,7 @@ def insert_commodity_bag():
         print(f"Error in fetching the cart - {error} \n\n{traceback.format_exc()}")
     
     data = {
-        "commodity": request.form.get('commodity'),
+        "commodity": request.form.get('commodity').capitalize(),
         "flag": False,
         "price": float(request.form.get('price')),
         "weight": float(request.form.get('weight')),
@@ -131,7 +131,6 @@ def insert_commodity_bag():
                 if b'items' in retrieved_data and len(retrieved_data[b'items']) > 0:
                     stored_list = json.loads(retrieved_data[b'items'].decode('utf-8'))
                     stored_list.append(data) # Append the data to the retrievd list
-                    print(stored_list)
                     redis_connection.hset(data['agent_id'], 'items', json.dumps(stored_list)) # Store it back to the redis
                 else:
                     print(retrieved_data)
@@ -232,7 +231,7 @@ def send_truck(agent_id):
                                 'truck_id': truck_id,
                                 'bag_id': item['bag_id'],
                                 'owner': 'HarvestHub_Owner',
-                                'commodity': item['commodity'],
+                                'commodity': item['commodity'].capitalize(),
                                 'price_kg': item['price'],
                                 'weight': item['weight'],
                                 'created_date': datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
@@ -247,6 +246,7 @@ def send_truck(agent_id):
     else:
         if info_to_owner:
             try:
+                print(stored_list)
                 with redis.Redis(host='redis', port=6379, db=2, password=os.getenv('REDIS_PASSWORD')) as redis_connection:
                     if len(stored_list) > 0:
                         for item in stored_list: 
@@ -256,7 +256,7 @@ def send_truck(agent_id):
                                 'truck_id': truck_id,
                                 'bag_id': item['bag_id'],
                                 'owner': 'HarvestHub_Owner',
-                                'commodity': item['commodity'],
+                                'commodity': item['commodity'].capitalize(),
                                 'price_kg': item['price'],
                                 'weight': item['weight'],
                                 'created_date': datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")

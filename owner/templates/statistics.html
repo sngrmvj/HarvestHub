@@ -37,7 +37,7 @@
                 padding:40px; 
                 justify-content:center;
                 align-items:center;
-                width: fit-content;
+                width: 100%;
                 margin-top: 20px;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
             }
@@ -102,7 +102,7 @@
                 border: 2px solid #2E8DCD;
             }
 
-            .maindiv .btn:hover { 
+            .btn:hover { 
                 /* outline: 2px dotted #55d7dc;  */
                 border: 2px solid #2E8DCD;
                 background-color: transparent;
@@ -188,19 +188,21 @@
         <div class="main">
             <div class="main_div">
                 <p style="font-size: 12px;">(You can scroll horizontally and vertically in the table)</p>
-                <div id="myGrid" style="height: 500px;width:1200px" class="ag-theme-alpine"></div>
+                <div id="myGrid" style="height: 500px;width:100%" class="ag-theme-alpine"></div>
 
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
                         var rowData = JSON.parse('{{ row_data | tojson | safe }}');
                         var gridOptions = {
                             columnDefs: [
-                                { field: "Bag ID", pinned: true, wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true },
-                                { field: "Farmer ID", pinned: true},
+                                { field: "Bag ID", pinned: true, wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true, width:400 },
+                                { field: "Farmer ID", pinned: true, width:150},
                                 { field: "Commodity", sortable:true },
-                                { field: "Price kg", },
-                                { field: "Selling Price", },
-                                { field: "Date of sell", wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true }
+                                { field: "Price kg",width:120 },
+                                { field: "Profit Percentage", width:120},
+                                { field: "Weight", width:120},
+                                { field: "Selling Price", width:120},
+                                { field: "Date of sell", wrapText: true, autoHeight: true, resizable: true, flex:1, sortable:true, width:200 }
                             ],
                             rowData: rowData,
                             defaultColDef: {

@@ -29,6 +29,7 @@ class Purchases(db.Model):
     retailer_phonenumber = db.Column(db.String(10), nullable=False)
     commodity = db.Column(db.String(120), nullable=False)
     price = db.Column(db.String(120), nullable=False)
+    weight = db.Column(db.Float, nullable=False)
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):

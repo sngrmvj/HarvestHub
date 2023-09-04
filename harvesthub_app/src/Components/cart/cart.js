@@ -129,36 +129,40 @@ const Cart = () => {
                     <button onClick={navigateToMenu} className='btn'><b>Menu</b></button>
             </div> <br/><br/>
 
-            <div className='cart-container'>
-                <header className="cart-header"><b>Cart</b></header>
-                <div style={{ listStyle: "none", padding: 0 }}>
-                    {groceries.map((item, i) => (
-                        <div key={i} className='li' style={{ padding: "10px", display: "flex", flexDirection:"row", justifyContent: "space-between",  borderBottom: "1px solid #ccc" }}>
-                            <div>
-                                <p><b>Commodity</b></p>
-                                <p>{item['commodity']}</p><br />
-                                <p><b>Weight</b></p>
-                                <p>{item['weight']}</p><br />
-                                <p><b>Price</b></p>
-                                <p>INR {item['price']}</p><br />
-                            </div>
-                            <div>
-                                <button style={{ border: "none", backgroundColor: "transparent", color: "#2E8DCD", cursor: "pointer", marginTop:"20px" }} onClick={() => removeFromCart(item['commodity'])}><b>Remove</b></button>
-                            </div>
+            <div>
+                {
+                    groceries ? <div className='cart-container'>
+                        <header className="cart-header"><b>Cart</b></header>
+                        <div style={{ listStyle: "none", padding: 0 }}>
+                            {groceries.map((item, i) => (
+                                <div key={i} className='li' style={{ padding: "10px", display: "flex", flexDirection:"row", justifyContent: "space-between",  borderBottom: "1px solid #ccc" }}>
+                                    <div>
+                                        <p><b>Commodity</b></p>
+                                        <p>{item['commodity']}</p><br />
+                                        <p><b>Weight</b></p>
+                                        <p>{item['weight']}</p><br />
+                                        <p><b>Price</b></p>
+                                        <p>INR {item['price']}</p><br />
+                                    </div>
+                                    <div>
+                                        <button style={{ border: "none", backgroundColor: "transparent", color: "#2E8DCD", cursor: "pointer", marginTop:"20px" }} onClick={() => removeFromCart(item['commodity'])}><b>Remove</b></button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-                <div className="cart-totals">
-                    <p className="cart-total-label">Total Weight:</p>
-                    <p className="cart-total-value">{totalWeight} kg</p>
-                </div>
-                <div className="cart-totals_below">
-                    <p className="cart-total-label">Total Price:</p>
-                    <p className="cart-total-value">INR {totalPrice}</p>
-                </div> <br/>
-                <div>
-                    <button className='btn' onClick={purchase_order}><b>Purchase</b></button>
-                </div>
+                        <div className="cart-totals">
+                            <p className="cart-total-label">Total Weight:</p>
+                            <p className="cart-total-value">{totalWeight} kg</p>
+                        </div>
+                        <div className="cart-totals_below">
+                            <p className="cart-total-label">Total Price:</p>
+                            <p className="cart-total-value">INR {totalPrice}</p>
+                        </div> <br/>
+                        <div>
+                            <button className='btn' onClick={purchase_order}><b>Purchase</b></button>
+                        </div>
+                    </div>: <span style={{padding:"35px", color:'#046FAA', fontWeight:"bold"}}><span className='cart-container'>No Items added yet</span></span>
+                }
             </div>
             <br/><br/><br/>
 

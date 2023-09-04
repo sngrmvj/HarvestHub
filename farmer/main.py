@@ -129,6 +129,7 @@ def get_receipts(email):
                 'Commodity': row.commodity, 
                 'Selling Price': row.price_kg, 
                 'Bag Weight': row.weight, 
+                'Total Price': row.price_kg * row.weight,
                 'Date of sell': row.created_date
             })
     except Exception as error:
